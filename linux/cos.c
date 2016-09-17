@@ -1,5 +1,7 @@
+#include <math.h>
+#include "command_bram.h"
 
-#include "cos_arm.h"
+#include "cos.h"
 
 int SetCosArray ()
 {

@@ -1,12 +1,5 @@
-#ifndef AXI_BRAM_ARM_H
-#define AXI_BRAM_ARM_H
-
-#include <stdio.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <inttypes.h>
-#include <linux/ioctl.h>
+#ifndef COMMAND_BRAM_H
+#define COMMAND_BRAM_H
 
 #define MEM_DEV         "/dev/axi_bram"
 

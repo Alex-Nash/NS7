@@ -1,14 +1,5 @@
-#ifndef COMMAND_ARM_H
-#define COMMAND_ARM_H
-
-#include <stdio.h>
-#include <string.h>
-
-
-#include "axi_bram_arm.h"
-
-#define TORQ_MASK Ox0FFF
-#define DIR_MASK  0xF000
+#ifndef COMMAND_HANDLER_H
+#define COMMAND_HANDLER_H
 
 
 #define MEM_OFFSET_DASHBOARD   (0x600 >> 2)
@@ -24,7 +15,6 @@
 
 #define MUTEX_UNLOCK              0x00
 #define MUTEX_LOCK                0x01
-
 
 
 struct Command

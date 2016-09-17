@@ -1,4 +1,8 @@
-#include "command_arm.h"
+#include <stdio.h>
+#include <string.h>
+#include "command_bram.h"
+
+#include "command_handler.h"
 
 /*
 * Write command to ram

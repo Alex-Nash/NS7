@@ -1,9 +1,28 @@
 /*
 ** server.c -- a stream socket server for xilinx linux
 */
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <string.h>
+
+#include "cos.h"
+#include "command_handler.h"
+#include "command_bram.h"
+
+#include "command_receiver.h"
+
 #define DEBUG
 
-#include "command_receiver_arm.h"
+
 
 #define BACKLOG 0      // how many pending connections queue will hold
 

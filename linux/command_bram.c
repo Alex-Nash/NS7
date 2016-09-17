@@ -1,4 +1,12 @@
-#include "axi_bram_arm.h"
+#include <stdio.h>
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <inttypes.h>
+#include <linux/ioctl.h>
+
+#include "command_bram.h"
+
 
 
 int BramMemoryWrite(uint32_t offset, uint32_t *data, uint32_t length)
