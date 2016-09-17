@@ -17,14 +17,9 @@
 #include "cos.h"
 #include "command_handler.h"
 #include "command_bram.h"
-
 #include "command_receiver.h"
 
 #define DEBUG
-
-
-
-#define BACKLOG 0      // how many pending connections queue will hold
 
 
 // function to handle cmd
@@ -34,7 +29,7 @@ int handle_cmd(char *cmd)
 
   printf("CMD: %s\n", cmd);
 
-  memcpy(command_arm, cmd, 7);
+  memcpy(command_str, cmd, 7);
   printf("command_str: %s\n", command_str);
 
   struct Command command;

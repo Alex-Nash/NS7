@@ -1,6 +1,7 @@
 #ifndef COMMAND_HANDLER_H
 #define COMMAND_HANDLER_H
 
+#include <inttypes.h>
 
 #define MEM_OFFSET_DASHBOARD   (0x600 >> 2)
 #define MEM_OFFSET_COMMAND     (MEM_OFFSET_DASHBOARD + 0x04)

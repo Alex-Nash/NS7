@@ -1,6 +1,8 @@
 #ifndef COMMAND_BRAM_H
 #define COMMAND_BRAM_H
 
+#include <inttypes.h>
+
 #define MEM_DEV         "/dev/axi_bram"
 
 struct bram_rw_data {
