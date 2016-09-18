@@ -3,18 +3,18 @@
 #include <linux/device.h>
 #include <asm/io.h>
 #include <linux/fs.h>
-#include <linux/uaccess.h> 
+#include <linux/uaccess.h>
 #include <linux/slab.h>
 
 #define DEBUG 1
 #include "debug.h"
 #include "axi_bram.h"
 
-#define AXI_BRAM_BASE 	0x40000000
+#define AXI_BRAM_BASE 	0x80000000
 #define AXI_BRAM_WIDTH	0x00001000
 
 
-u32 *AxiBram_Pointer; 
+u32 *AxiBram_Pointer;
 
 #define DEVICE_NAME "axi_bram"
 #define CLASS_NAME "bram"
@@ -116,8 +116,8 @@ static long bram_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 }
 
 struct file_operations fops = {
- //    .read = bram_read, 
- //    .write = bram_write, 
+ //    .read = bram_read,
+ //    .write = bram_write,
     .open = bram_open,
     .release = bram_close,
     .unlocked_ioctl = bram_ioctl
