@@ -6,6 +6,6 @@
 //#define MAX_ANGLE_VALUE		0xFFFF
 #define COS_ARRAY_LENGTH  372
 
-int SetCosArray ();
+int set_cos_array ();
 
 #endif

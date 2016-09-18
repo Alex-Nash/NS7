@@ -14,12 +14,12 @@
 #include <signal.h>
 #include <string.h>
 
+#define DEBUG
+
 #include "cos.h"
 #include "command_handler.h"
 #include "command_bram.h"
 #include "command_receiver.h"
-
-#define DEBUG
 
 
 // function to handle cmd
@@ -32,14 +32,14 @@ int handle_cmd(char *cmd)
   memcpy(command_str, cmd, 7);
   printf("command_str: %s\n", command_str);
 
-  struct Command command;
-  ParseCommand(&command, command_str);
+  struct command cur_command;
+  parse_command(&cur_command, command_str);
 
-  printf(" position: %c\n", command.position);
-  printf("direction: %lu\n", command.direction);
-  printf("     torq: %lu\n", command.torq);
+  printf(" position: %c\n", cur_command.position);
+  printf("direction: %lu\n", cur_command.direction);
+  printf("     torq: %lu\n", cur_command.torq);
 
-  SendCommand(&command);
+  send_command(&cur_command);
   return 0;
 }
 
@@ -66,12 +66,12 @@ int main(int argc, char *argv[])
     port = atoi(argv[1]);
 
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        DEBUG_PRINT("socket1");
+        DEBUG_PRINT("socket: %s", strerror(errno));
 		exit(1);
     }
 
     if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-        DEBUG_PRINT("setsockopt");
+        DEBUG_PRINT("setsockopt: %s", strerror(errno));
 		exit(1);
     }
 
@@ -81,12 +81,12 @@ int main(int argc, char *argv[])
     memset(&(my_addr.sin_zero), '\0', 8); // zero the rest of the struct
 
     if(bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {
-        DEBUG_PRINT("bind");
+        DEBUG_PRINT("bind: %s", strerror(errno));
 		exit(1);
     }
 
     if(listen(sockfd, SOMAXCONN) == -1) {
-        DEBUG_PRINT("listen");
+        DEBUG_PRINT("listen: %s", strerror(errno));
 		exit(1);
     }
 
@@ -95,13 +95,14 @@ int main(int argc, char *argv[])
     sa.sa_flags = SA_RESTART;
 
     if(sigaction(SIGCHLD, &sa, NULL) == -1) {
-        DEBUG_PRINT("sigaction");
+        DEBUG_PRINT("sigaction: %s", strerror(errno));
 		exit(1);
     }
 
     // Set cos array
-    if (SetCosArray() < 0)
-      printf("Command recever: error set cos array\n");
+    if (set_cos_array() < 0) {
+        DEBUG_PRINT("set_cos_array: error set cos array\n");
+    }
 
     // main accept() only one connection
     while(1)

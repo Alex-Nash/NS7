@@ -6,8 +6,6 @@
 #define MEM_OFFSET_DASHBOARD   (0x600 >> 2)
 #define MEM_OFFSET_COMMAND     (MEM_OFFSET_DASHBOARD + 0x04)
 
-
-
 #define ENG_DIRECTION_REVERSE     0x00
 #define ENG_DIRECTION_FORWARD     0x01
 
@@ -18,7 +16,7 @@
 #define MUTEX_LOCK                0x01
 
 
-struct Command
+struct command
 {
   char position;
   uint16_t enable;                 // 0x01 - Enable  ; 0x00 - Disable
@@ -26,7 +24,7 @@ struct Command
   uint16_t torq;		       // 0x0000..0xFFFF
 };
 
-int SendCommand(struct Command *command);
-int ParseCommand(struct Command *command, char *str);
+int send_command(struct command *cur_command);
+int parse_command(struct command *cur_command, char *str);
 
 #endif

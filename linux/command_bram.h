@@ -17,6 +17,6 @@ struct bram_rw_data {
 #define AXI_BRAM_WRITE           _IOW(TIMER_IOC_MAGIC, 2, struct bram_rw_data)
 
 
-int BramMemoryWrite(uint32_t offset, uint32_t *data, uint32_t length);
+int bram_memory_write(uint32_t offset, uint32_t *data, uint32_t length);
 
 #endif

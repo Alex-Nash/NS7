@@ -8,8 +8,7 @@
 #include "command_bram.h"
 
 
-
-int BramMemoryWrite(uint32_t offset, uint32_t *data, uint32_t length)
+int bram_memory_write(uint32_t offset, uint32_t *data, uint32_t length)
 {
     int mem_file;
     mem_file = open(MEM_DEV, O_RDWR);
