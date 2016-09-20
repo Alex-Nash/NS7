@@ -1,7 +1,6 @@
 /*
 ** server.c -- a stream socket server for xilinx linux
 */
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
@@ -14,8 +13,7 @@
 #include <signal.h>
 #include <string.h>
 
-#define DEBUG
-
+#include "log.h"
 #include "cos.h"
 #include "command_handler.h"
 #include "command_bram.h"
@@ -23,21 +21,21 @@
 
 
 // function to handle cmd
-int handle_cmd(char *cmd)
+int handle_command(char *cmd)
 {
   char command_str[7];
 
-  printf("CMD: %s\n", cmd);
+  write_log("CMD: %s\n", cmd);
 
   memcpy(command_str, cmd, 7);
-  printf("command_str: %s\n", command_str);
+  write_log("command_str: %s\n", command_str);
 
   struct command cur_command;
   parse_command(&cur_command, command_str);
 
-  printf(" position: %c\n", cur_command.position);
-  printf("direction: %lu\n", cur_command.direction);
-  printf("     torq: %lu\n", cur_command.torq);
+  write_log(" position: %c\n", cur_command.position);
+  write_log("direction: %lu\n", cur_command.direction);
+  write_log("     torq: %lu\n", cur_command.torq);
 
   send_command(&cur_command);
   return 0;
@@ -49,30 +47,21 @@ void sigchld_handler(int s)
     while(wait(NULL) > 0);
 }
 
-
-int main(int argc, char *argv[])
+int init_command_socket(int port)
 {
-    if (argc != 2) {
-        fprintf(stderr,"usage: server port\n");
-        exit(1);
-    }
-
-    int sockfd;  // listen on sock_fd
+    //int sockfd;  // listen on sock_fd
     struct sockaddr_in my_addr;    // my address information
     struct sigaction sa;
     int yes = 1;
-    int port;
-
-    port = atoi(argv[1]);
 
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        DEBUG_PRINT("socket: %s", strerror(errno));
-		exit(1);
+        write_log("socket: %s", strerror(errno));
+        return -1;
     }
 
     if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-        DEBUG_PRINT("setsockopt: %s", strerror(errno));
-		exit(1);
+        write_log("setsockopt: %s", strerror(errno));
+        return -1;
     }
 
     my_addr.sin_family = AF_INET;         // host byte order
@@ -81,13 +70,13 @@ int main(int argc, char *argv[])
     memset(&(my_addr.sin_zero), '\0', 8); // zero the rest of the struct
 
     if(bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {
-        DEBUG_PRINT("bind: %s", strerror(errno));
-		exit(1);
+        write_log("bind: %s", strerror(errno));
+        return -1;
     }
 
     if(listen(sockfd, SOMAXCONN) == -1) {
-        DEBUG_PRINT("listen: %s", strerror(errno));
-		exit(1);
+        write_log("listen: %s", strerror(errno));
+        return -1;
     }
 
     sa.sa_handler = sigchld_handler; // reap all dead processes
@@ -95,31 +84,32 @@ int main(int argc, char *argv[])
     sa.sa_flags = SA_RESTART;
 
     if(sigaction(SIGCHLD, &sa, NULL) == -1) {
-        DEBUG_PRINT("sigaction: %s", strerror(errno));
-		exit(1);
+        write_log("sigaction: %s", strerror(errno));
+        return -1;
     }
 
     // Set cos array
     if (set_cos_array() < 0) {
-        DEBUG_PRINT("set_cos_array: error set cos array\n");
+        write_log("set_cos_array: error set cos array\n");
+        return -1;
     }
 
     // main accept() only one connection
     while(1)
     {
-        int client_fd; // new connection or reset of connetction
+        //int client_fd; // new connection or reset of connetction
         struct sockaddr_in their_addr; // connector's address information
         int sin_size;
 
-        printf("Wait for connection...\n");
+        write_log("Wait for connection...\n");
 
         sin_size = sizeof(struct sockaddr_in);
-        if((client_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
-            DEBUG_PRINT("accept");
+        if((clientfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
+            write_log("accept: s", strerror(errno));
             continue;
         }
 
-        printf("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
+        write_log("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
 
         int numbytes;
         char cmd[CMDSIZE];
@@ -127,25 +117,27 @@ int main(int argc, char *argv[])
         while(1)
         {
 
-            if((numbytes = recv(client_fd, cmd, CMDSIZE, 0)) == -1) {
-                DEBUG_PRINT("recv");
+            if((numbytes = recv(clientfd, cmd, CMDSIZE, 0)) == -1) {
+                write_log("recv: %s\n", strerror(errno));
                 break;
             }
 
             if(numbytes == 0) {
-                DEBUG_PRINT("connection lost");
+                write_log("connection lost\n");
                 break;
             }
 
-            if(handle_cmd(cmd) == -1)
+            if(handle_command(cmd) == -1)
             {
-                DEBUG_PRINT("bad cmd");
+                write_log("handle_command: bad command\n");
                 break;
             }
 
         }
 
-        close(client_fd);
+        close(clientfd);
+        close(sockfd);
+        return -1;
     }
 
     return 0;

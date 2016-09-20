@@ -11,6 +11,12 @@
 
 #define CMDSIZE     7 // number of bytes for commands
 
+int sockfd;
+int clientfd;
+
+int init_command_socket(int port);
+
+
 /*
 #define LEFT        0x10 // value for cmd: select left motor
 #define RIGHT       0x11 // value for cmd: select right motor
