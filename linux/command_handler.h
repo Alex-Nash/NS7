@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #define MEM_OFFSET_DASHBOARD   (0x600 >> 2)
+#define MEM_OFFSET_POWER       (MEM_OFFSET_DASHBOARD + 0x02)
 #define MEM_OFFSET_COMMAND     (MEM_OFFSET_DASHBOARD + 0x04)
 
 #define ENG_DIRECTION_REVERSE     0x00
@@ -12,19 +13,32 @@
 #define ENG_DISABLE               0x00
 #define ENG_ENABLE                0x01
 
-#define MUTEX_UNLOCK              0x00
-#define MUTEX_LOCK                0x01
 
-
-struct command
+struct move_command
 {
-  char position;
-  uint16_t enable;                 // 0x01 - Enable  ; 0x00 - Disable
-  uint16_t direction;              // 0x01 - Forward ; 0x00 - Back
-  uint16_t torq;		       // 0x0000..0xFFFF
+  uint16_t left_eng_direction;     // 0x01 - Forward ; 0x00 - Back
+  uint16_t left_eng_torq;		       // 0x0000..0xFFFF
+  uint16_t right_eng_direction;    // 0x01 - Forward ; 0x00 - Back
+  uint16_t right_eng_torq;		     // 0x0000..0xFFFF
 };
 
-int send_command(struct command *cur_command);
-int parse_command(struct command *cur_command, char *str);
+/*
+*  Execute command
+*  'p' - power enable/disable command 4 byte.
+*           'ENA' - enable engines; 'DIS' - disable engine.
+*        Example: 'pENA'
+*  'm' - move command 8 byte. [left_eng_dir][left_eng_torq][right_eng_dir][right_eng_torq]
+*          torq = 0..100;
+*          '-' - move back ; '+' - move forward.
+*        Example: 'm-100+050'
+*/
+int execute_command (char *command_str);
+
+int execute_move_cmd(char *command_str);
+
+int parse_move_command(char *str, struct command *cur_command);
+
+int execute_power_cmd(char *command_str);
+
 
 #endif

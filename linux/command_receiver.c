@@ -25,21 +25,8 @@
 // function to handle cmd
 int handle_cmd(char *cmd)
 {
-  char command_str[7];
-
   printf("CMD: %s\n", cmd);
-
-  memcpy(command_str, cmd, 7);
-  printf("command_str: %s\n", command_str);
-
-  struct command cur_command;
-  parse_command(&cur_command, command_str);
-
-  printf(" position: %c\n", cur_command.position);
-  printf("direction: %lu\n", cur_command.direction);
-  printf("     torq: %lu\n", cur_command.torq);
-
-  send_command(&cur_command);
+  execute_command(&cmd);
   return 0;
 }
 
