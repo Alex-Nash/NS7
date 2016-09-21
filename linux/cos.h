@@ -2,7 +2,7 @@
 #define COS_H
 
 
-#define MEM_OFFSET_COS    0x00
+#define MEM_OFFSET_COS         (0x00008000)
 //#define MAX_ANGLE_VALUE		0xFFFF
 #define COS_ARRAY_LENGTH  372
 

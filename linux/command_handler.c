@@ -74,6 +74,7 @@ int execute_move_cmd(char *command_str)
   }
 
   //smoothing alg
+/*
   prev_left_eng_speed = 0xFFFFFFFF - prev_mem_command[1];
   speed_step = (prev_left_eng_speed > cur_command.left_eng_speed) ? 
 		prev_left_eng_speed - cur_command.left_eng_speed : 
@@ -86,6 +87,7 @@ int execute_move_cmd(char *command_str)
 		                   SMOOTHING - prev_left_eng_speed;
   
   }
+*/
 
 
   // *** Left engine command ***
