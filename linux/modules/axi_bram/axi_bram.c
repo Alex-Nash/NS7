@@ -11,10 +11,10 @@
 #include "axi_bram.h"
 
 #define AXI_BRAM_BASE 	0x80000000
-#define AXI_BRAM_WIDTH	0x00001000
+#define AXI_BRAM_WIDTH	0x00010000
 
 
-u32 *AxiBram_Pointer;
+u32 *axibram_pointer;
 
 #define DEVICE_NAME "axi_bram"
 #define CLASS_NAME "bram"
@@ -22,7 +22,7 @@ u32 *AxiBram_Pointer;
 #define SUCCESS 0
 
 static int majorNumber;
-static int Device_Open = 0;
+static int device_open = 0;
 static struct class*  charClass  = NULL;
 static struct device* charDevice = NULL;
 
@@ -32,7 +32,7 @@ ssize_t bram_write(struct file *flip, const char *buffer, size_t length, loff_t 
     u32 byte_write = 0;
     u32 tmpbuff[AXI_BRAM_WIDTH];
 
-    if( copy_from_user((void*)AxiBram_Pointer, buffer, length))
+    if(copy_from_user((void*)axibram_pointer, buffer, length))
         return -EINVAL;
 
     return SUCCESS;
@@ -41,7 +41,7 @@ ssize_t bram_write(struct file *flip, const char *buffer, size_t length, loff_t 
 
 ssize_t bram_read(struct file *flip, char *buffer, size_t length, loff_t *offset)
 {
-    if( copy_to_user(buffer, (void*)AxiBram_Pointer, length) )
+    if(copy_to_user(buffer, (void*)axibram_pointer, length) )
         return -EINVAL;
 
     return SUCCESS;
@@ -50,10 +50,10 @@ ssize_t bram_read(struct file *flip, char *buffer, size_t length, loff_t *offset
 
 static int bram_open(struct inode *inode, struct file *file)
 {
-    if (Device_Open)
+    if(device_open)
         return -EBUSY;
 
-    Device_Open++;
+    device_open++;
     printk("You tried to open the %s module.\n", DEVICE_NAME);
     try_module_get(THIS_MODULE);
     return SUCCESS;
@@ -62,7 +62,7 @@ static int bram_open(struct inode *inode, struct file *file)
 
 static int bram_close(struct inode *inode, struct file *file)
 {
-    Device_Open--;
+    device_open--;
 
     module_put(THIS_MODULE);
     return SUCCESS;
@@ -94,19 +94,21 @@ static long bram_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
             kfree(value);
             return -EACCES;
         }
-        memcpy(AxiBram_Pointer + data.offset, value, data.size * sizeof(u32));
+        memcpy(axibram_pointer + data.offset, value, data.size * sizeof(u32));
         DEBUG_PRINT("ioctl write ok!");
         break;
     case AXI_BRAM_READ:
         DEBUG_PRINT("ioctl read value");
-        memcpy(value, AxiBram_Pointer + data.offset, data.size * sizeof(u32));
+        memcpy(value, axibram_pointer + data.offset, data.size * sizeof(u32));
 
-        if(copy_to_user(data.data, AxiBram_Pointer + data.offset, data.size * sizeof(u32))) {
+        if(copy_to_user(data.data, axibram_pointer + data.offset, data.size * sizeof(u32))) {
             DEBUG_PRINT("ioctl can't copy to user");
+            kfree(value);
             return -EACCES;
         }
         break;
     default:
+        kfree(value);
         return -ENOTTY;
     }
 
@@ -127,7 +129,7 @@ struct file_operations fops = {
 static int __init mod_init(void)
 {
     printk(KERN_ERR "Init %s module. \n", DEVICE_NAME);
-    AxiBram_Pointer = ioremap_nocache(AXI_BRAM_BASE, AXI_BRAM_WIDTH);
+    axibram_pointer = ioremap_nocache(AXI_BRAM_BASE, AXI_BRAM_WIDTH);
 
     majorNumber = register_chrdev(0, DEVICE_NAME, &fops);
     if (majorNumber<0){
@@ -162,7 +164,7 @@ static int __init mod_init(void)
 
 static void __exit mod_exit(void)
 {
-    iounmap(AxiBram_Pointer);
+    iounmap(axibram_pointer);
     unregister_chrdev(majorNumber, DEVICE_NAME);
     printk(KERN_ERR "Exit %s Module. \n", DEVICE_NAME);
 }
