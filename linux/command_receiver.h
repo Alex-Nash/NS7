@@ -9,7 +9,7 @@
  #define DEBUG_PRINT(fmt, args...)
 #endif
 
-#define CMDSIZE     7 // number of bytes for commands
+#define CMDSIZE     9 // number of bytes for commands
 
 /*
 #define LEFT        0x10 // value for cmd: select left motor

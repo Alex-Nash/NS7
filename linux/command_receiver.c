@@ -16,9 +16,9 @@
 
 #define DEBUG
 
-#include "cos.h"
-#include "command_handler.h"
-#include "command_bram.h"
+#include "cos.c"
+#include "command_handler.c"
+#include "command_bram.c"
 #include "command_receiver.h"
 
 
@@ -26,7 +26,7 @@
 int handle_cmd(char *cmd)
 {
   printf("CMD: %s\n", cmd);
-  execute_command(&cmd);
+  execute_command(cmd);
   return 0;
 }
 

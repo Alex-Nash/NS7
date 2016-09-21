@@ -3,15 +3,18 @@
 
 #include <inttypes.h>
 
-#define MEM_OFFSET_DASHBOARD   (0x600 >> 2)
-#define MEM_OFFSET_POWER       (MEM_OFFSET_DASHBOARD + 0x02)
-#define MEM_OFFSET_COMMAND     (MEM_OFFSET_DASHBOARD + 0x04)
+#define MEM_OFFSET_DASHBOARD    0x600
+#define MEM_OFFSET_POWER        (MEM_OFFSET_DASHBOARD + 0x08)
+#define MEM_OFFSET_COMMAND     	(MEM_OFFSET_DASHBOARD + 0x10)
+//#define MEM_OFFSET_RIGHT_COMMAND     	(MEM_OFFSET_DASHBOARD + 0x06)
 
 #define ENG_DIRECTION_REVERSE     0x00
 #define ENG_DIRECTION_FORWARD     0x01
 
 #define ENG_DISABLE               0x00
 #define ENG_ENABLE                0x01
+
+#define SMOOTHING		0xFFFFFF
 
 
 struct move_command
@@ -20,6 +23,8 @@ struct move_command
   uint16_t left_eng_torq;		       // 0x0000..0xFFFF
   uint16_t right_eng_direction;    // 0x01 - Forward ; 0x00 - Back
   uint16_t right_eng_torq;		     // 0x0000..0xFFFF
+  uint32_t left_eng_speed;
+  uint32_t right_eng_speed;
 };
 
 /*
@@ -36,7 +41,7 @@ int execute_command (char *command_str);
 
 int execute_move_cmd(char *command_str);
 
-int parse_move_command(char *str, struct command *cur_command);
+int parse_move_command(char *str, struct move_command *cur_command);
 
 int execute_power_cmd(char *command_str);
 
