@@ -1,6 +1,9 @@
 #ifndef LOG_H
 #define LOG_H
 
-void write_log(const char *format, ...);
+int open_log();
+void close_log();
+
+void log(const char *format, ...);
 
 #endif

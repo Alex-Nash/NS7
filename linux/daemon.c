@@ -249,14 +249,14 @@ void usage()
 
 int main(int argc, char** argv)
 {
+    if(argc != 2)
+    {
+        usage();
+        return -1;
+    }
+
     int start = 0;
     int stop = 0;
-
-    if(argc != 2)
-	{
-        usage();
-		return -1;
-	}
 
     if(strcmp(argv[1], "start") == 0) start = 1;
     if(strcmp(argv[1], "stop") == 0) stop = 1;
@@ -303,7 +303,8 @@ int main(int argc, char** argv)
         exit(1);
     }
 
-    if(start && (status != -1)) {
+    if(start && (status != -1))
+    {
         printf("Daemon is already running\n");
         exit(1);
     }
@@ -311,30 +312,47 @@ int main(int argc, char** argv)
     pid = fork(); // create monitor process
 
     if (pid == -1)
-	{
-        printf("Start Daemon Error: %s\n", strerror(errno));
-		return -1;
-	}
-    else if (!pid) // monitor
     {
-        umask(0); // all privilage for created file
-
-        setsid(); // create new session
-
-        chdir("/"); // go to disk root
-
-        // close input/output descriptor
-        close(STDIN_FILENO);
-        close(STDOUT_FILENO);
-        close(STDERR_FILENO);
-
-        status = monitor_proc();
-        return status;
-	}
-    else // parent
-	{
+        printf("Fail to start daemon: %s\n", strerror(errno));
+        return -1;
+    }
+    else if (pid > 0)
+    {
         printf("Starting daemon....\nSee log for more information\n");
         return 0;
-	}
+    }
+
+    // monitor
+    int sid;
+
+    // open log
+    if(open_log() == -1)
+    {
+        printf("Fail to open log: %s\n", strerror(errno));
+        return -1;
+    }
+
+    umask(0); // all privilage for created file
+    sid = setsid(); // create new session
+    if(sid == -1)
+    {
+        log("Fail to create new session: %s\n", strerror(errno));
+        return -1;
+    }
+
+    if(chdir("/") == -1) // go to disk root
+    {
+        log("Fail to change working dir: %s", strerror(errno));
+        return -1;
+    }
+
+    // close input/output descriptor
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+
+    status = monitor_proc();
+
+    return status;
 }
 
