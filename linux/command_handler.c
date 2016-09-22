@@ -24,18 +24,16 @@ int execute_command (char *command_str)
   char move_cmd_str[8];
 
   switch (str) {
-    case 'p':
-      
+    case 'p':   
       memcpy(power_cmd_str, &(command_str[1]), 3);
       execute_power_cmd(power_cmd_str);
       break;
-    case 'm':
-      
+    case 'm':     
       memcpy(move_cmd_str, &(command_str[1]), 8);
       execute_move_cmd(move_cmd_str);
       break;
     default:
-      printf ("Wrong command!\n");
+      printf ("execute_command: Wrong command!\n");
       return -1;
   }
 
@@ -50,7 +48,9 @@ int execute_command (char *command_str)
 
 int execute_move_cmd(char *command_str)
 {
-  uint32_t mem_command[4];
+  uint32_t mem_command_left[2];
+  uint32_t mem_command_right[2];
+
   uint32_t prev_mem_command[4];
   uint32_t  prev_left_eng_speed, prev_right_eng_speed, speed_step;
   uint32_t torq, dir;
@@ -62,19 +62,20 @@ int execute_move_cmd(char *command_str)
   status = parse_move_command(command_str, &cur_command);
   if (status == -1)
   {
-    printf("Error parse move command! \n");
+    printf("execute_move_cmd: Error parse move command! \n");
     return -1;
   }
-  
+
+  /*
   status = bram_memory_read((uint32_t)MEM_OFFSET_COMMAND , prev_mem_command, 4);
   if ( status == -1)
   {
-    printf("Error sending command\n");
+    printf("execute_move_cmd: Error sending command\n");
     return -1;
   }
 
   //smoothing alg
-/*
+
   prev_left_eng_speed = 0xFFFFFFFF - prev_mem_command[1];
   speed_step = (prev_left_eng_speed > cur_command.left_eng_speed) ? 
 		prev_left_eng_speed - cur_command.left_eng_speed : 
@@ -100,9 +101,16 @@ int execute_move_cmd(char *command_str)
 
   torq = ((uint32_t)(cur_command.left_eng_speed >> 16)) & ((uint32_t)0x0000FFFF);
   // create 32 bit command
-  mem_command[0] = (uint32_t)(torq | dir);
+  mem_command_left[0] = (uint32_t)(torq | dir);
   // set left engine speed
-  mem_command[1] = (uint32_t)(0xFFFFFFFF - cur_command.left_eng_speed);
+  mem_command_left[1] = (uint32_t)(0xFFFFFFFF - cur_command.left_eng_speed);
+
+  status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_LEFT , mem_command_left, 2);
+  if ( status == -1)
+  {
+    printf("execute_move_cmd: Error sending command\n");
+    return -1;
+  }
 
   // *** Right engine command ***
   // define direction on command bite
@@ -110,14 +118,14 @@ int execute_move_cmd(char *command_str)
   // define torq on command bite
   torq = ((uint32_t)(cur_command.right_eng_speed >> 16)) & ((uint32_t)0x0000FFFF);
   // create 32 bit command
-  mem_command[2] = (uint32_t)(torq | dir);
+  mem_command_right[0] = (uint32_t)(torq | dir);
   // set right engine speed
-  mem_command[3] = (uint32_t)(0xFFFFFFFF - cur_command.right_eng_speed);
+  mem_command_right[1] = (uint32_t)(0xFFFFFFFF - cur_command.right_eng_speed);
 
-  status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND , mem_command, 4);
+  status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_RIGHT , mem_command, 2);
   if ( status == -1)
   {
-    printf("Error sending command\n");
+    printf("execute_move_cmd: Error sending command\n");
     return -1;
   }
 
@@ -160,8 +168,8 @@ int parse_move_command(char *str, struct move_command *cur_command)
   if (tmp_torq < 0 || tmp_torq > 100)
     return -1;
 
-  cur_command->left_eng_speed = (uint32_t)(0xFFFFFFFF * tmp_torq/100.0);
-  cur_command->left_eng_torq = (uint16_t)(cur_command->left_eng_speed >> 16);
+  cur_command->left_eng_speed = (uint32_t)(0x3F + 0x1FFC0 * tmp_torq/100.0);
+  cur_command->left_eng_torq = (uint16_t)(0x3F + 0x1FFC0 * tmp_torq/100.0);
 
   // get right engine TORQ and set command struct
   memcpy(torq_buff, &str[5], 3);
@@ -189,7 +197,7 @@ int execute_power_cmd(char *command_str)
   }
   else
   {
-    printf("Error parse power command! \n");
+    printf("execute_power_cmd: Error parse power command! \n");
     return -1;
   }
 

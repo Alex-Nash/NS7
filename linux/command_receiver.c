@@ -40,6 +40,20 @@ void sigchld_handler(int s)
 
 int main(int argc, char *argv[])
 {
+    // Set cos array
+    if (set_cos_array() < 0) {
+        DEBUG_PRINT("set_cos_array: error set cos array\n");
+    }
+    DEBUG_PRINT("set_cos_array: OK!\n"); 
+    // Load bin file to the memmory
+
+
+    if (file_loader("/home/mb_hello.bin") < 0) {
+        DEBUG_PRINT("file_loader: error load file\n");
+    }
+    DEBUG_PRINT("file_loader: OK!\n");
+
+
     if (argc != 2) {
         fprintf(stderr,"usage: server port\n");
         exit(1);
@@ -87,17 +101,7 @@ int main(int argc, char *argv[])
 		exit(1);
     }
 
-    // Set cos array
-    if (set_cos_array() < 0) {
-        DEBUG_PRINT("set_cos_array: error set cos array\n");
-    }
-    DEBUG_PRINT("set_cos_array: OK!\n");
-    // Load bin file to the memmory
 
-    if (file_loader("/home/mb_hello.bin") < 0) {
-        DEBUG_PRINT("file_loader: error load file\n");
-    }
-    DEBUG_PRINT("file_loader: OK!\n");
     // main accept() only one connection
     while(1)
     {

@@ -22,6 +22,7 @@ int file_loader (char *filename)
 
     if(fstat(src_file, &statbuf) < 0 ) {
         printf("can't obtain file size\n");
+        close(src_file);
         return -1;
     }
 
@@ -29,6 +30,7 @@ int file_loader (char *filename)
 
     if((src_ptr = mmap(0, statbuf.st_size, PROT_READ, MAP_SHARED, src_file, 0)) == MAP_FAILED ) {
         printf("failed to map file to the memory\n");
+        close(src_file);
         return -1;
     }
 
@@ -36,7 +38,8 @@ int file_loader (char *filename)
 
 
 
-    bram_memory_write((uint32_t) MEM_OFFSET, src_ptr, (uint32_t)(statbuf.st_size >> 2));
-
+    bram_memory_write((uint32_t) MEM_OFFSET, src_ptr, (uint32_t)(statbuf.st_size / 4));
+    
+    close(src_file);
     return 0;
 }
