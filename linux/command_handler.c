@@ -76,7 +76,7 @@ int execute_move_cmd(char *command_str)
   // create 32 bit command
   mem_command_left[0] = (uint32_t)(torq | dir);
   // set left engine delay
-  mem_command_left[1] = speed_to_delay(cur_command.left_eng_speed));
+  mem_command_left[1] = speed_to_delay(cur_command.left_eng_speed);
 
   status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_LEFT , mem_command_left, 2);
   if ( status == -1)
