@@ -15,17 +15,22 @@
 #define ENG_DISABLE               0x00
 #define ENG_ENABLE                0x01
 
-#define SMOOTHING		0xFFFFFF
+#define SMOOTHING		5
+
+#define MIN_DELAY   0x3F
+#define MAX_DELAY   0x1FFFE
+#define MIN_TORQ    0x7FFF
+#define MAX_TORQ    0xFFFE
 
 
 struct move_command
 {
-  uint16_t left_eng_direction;     // 0x01 - Forward ; 0x00 - Back
-  uint16_t left_eng_torq;		       // 0x0000..0xFFFF
-  uint16_t right_eng_direction;    // 0x01 - Forward ; 0x00 - Back
-  uint16_t right_eng_torq;		     // 0x0000..0xFFFF
-  uint32_t left_eng_speed;
-  uint32_t right_eng_speed;
+  //uint16_t left_eng_direction;     // 0x01 - Forward ; 0x00 - Back
+  int left_eng_speed;		       // 0 .. 100
+  //uint32_t left_eng_delay;         // 0x3F .. 0x1FFFF
+  //uint16_t right_eng_direction;    // 0x01 - Forward ; 0x00 - Back
+  int right_eng_speed;		     // 0 .. 100
+  //uint32_t right_eng_delay;        // 0x3F .. 0x1FFFF
 };
 
 /*
@@ -46,5 +51,12 @@ int parse_move_command(char *str, struct move_command *cur_command);
 
 int execute_power_cmd(char *command_str);
 
+uint32_t speed_to_delay(uint16_t speed);
+
+uint32_t speed_to_torq(uint16_t speed);
+
+int torq_to_speed(uint32_t torq, uint16_t direction);
+
+int speed_smoothing (int cur_speed_value, int prev_speed_value);
 
 #endif
