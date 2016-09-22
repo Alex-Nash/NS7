@@ -24,19 +24,19 @@
 
 
 // function to handle cmd
-int handle_commmand(char *cmd)
+int handle_command(char *cmd)
 {
-  printf("CMD: %s\n", cmd);
-  //execute_command(cmd);
+  printf(" CMD: %s\n", cmd);
+  execute_command(cmd);
   return 0;
 }
 
 int recv_command(int sock, char *buf)
 {
     int numbytes;
-    *buf = '\0';
+    bzero(buf, 9);
 
-    numbytes = recv(client_fd, cmd, CMDSIZE, 0);
+    numbytes = recv(sock, buf, CMDSIZE, 0);
 
     if(numbytes == -1) return -1;
     if((numbytes == 0) || (numbytes != CMDSIZE)) return 0;
@@ -60,12 +60,14 @@ int main(int argc, char *argv[])
     // Set cos array
     if (set_cos_array() < 0) {
         DEBUG_PRINT("set_cos_array: error set cos array\n");
+        exit(1);
     }
     DEBUG_PRINT("set_cos_array: OK!\n");
 
     // Load bin file to the memmory
     if (file_loader("/home/mb_hello.bin") < 0) {
         DEBUG_PRINT("file_loader: error load file\n");
+        exit(1);
     }
     DEBUG_PRINT("file_loader: OK!\n");
 
@@ -146,7 +148,7 @@ int main(int argc, char *argv[])
                 continue;
             }
 
-            if(handle_cmd(cmd) == -1)
+            if(handle_command(cmd) == -1)
             {
                 DEBUG_PRINT("wrong command");
                 continue;
