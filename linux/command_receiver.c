@@ -24,13 +24,25 @@
 
 
 // function to handle cmd
-int handle_cmd(char *cmd)
+int handle_commmand(char *cmd)
 {
   printf("CMD: %s\n", cmd);
-  execute_command(cmd);
+  //execute_command(cmd);
   return 0;
 }
 
+int recv_command(int sock, char *buf)
+{
+    int numbytes;
+    *buf = '\0';
+
+    numbytes = recv(client_fd, cmd, CMDSIZE, 0);
+
+    if(numbytes == -1) return -1;
+    if((numbytes == 0) || (numbytes != CMDSIZE)) return 0;
+
+    return 1;
+}
 
 void sigchld_handler(int s)
 {
@@ -44,6 +56,18 @@ int main(int argc, char *argv[])
         fprintf(stderr,"usage: server port\n");
         exit(1);
     }
+
+    // Set cos array
+    if (set_cos_array() < 0) {
+        DEBUG_PRINT("set_cos_array: error set cos array\n");
+    }
+    DEBUG_PRINT("set_cos_array: OK!\n");
+
+    // Load bin file to the memmory
+    if (file_loader("/home/mb_hello.bin") < 0) {
+        DEBUG_PRINT("file_loader: error load file\n");
+    }
+    DEBUG_PRINT("file_loader: OK!\n");
 
     int sockfd;  // listen on sock_fd
     struct sockaddr_in my_addr;    // my address information
@@ -87,17 +111,6 @@ int main(int argc, char *argv[])
 		exit(1);
     }
 
-    // Set cos array
-    if (set_cos_array() < 0) {
-        DEBUG_PRINT("set_cos_array: error set cos array\n");
-    }
-    DEBUG_PRINT("set_cos_array: OK!\n");
-    // Load bin file to the memmory
-
-    if (file_loader("/home/mb_hello.bin") < 0) {
-        DEBUG_PRINT("file_loader: error load file\n");
-    }
-    DEBUG_PRINT("file_loader: OK!\n");
     // main accept() only one connection
     while(1)
     {
@@ -115,28 +128,29 @@ int main(int argc, char *argv[])
 
         printf("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
 
-        int numbytes;
+
+        int status;
         char cmd[CMDSIZE];
 
         while(1)
         {
+            status = recv_command(client_fd, cmd);
 
-            if((numbytes = recv(client_fd, cmd, CMDSIZE, 0)) == -1) {
-                DEBUG_PRINT("recv");
+            if(status == -1) {
+                DEBUG_PRINT("connection lost\n: %s", strerror(errno));
                 break;
             }
 
-            if(numbytes == 0) {
-                DEBUG_PRINT("connection lost");
-                break;
+            if(status == 0) {
+                DEBUG_PRINT("can't resolve command: %s", cmd);
+                continue;
             }
 
             if(handle_cmd(cmd) == -1)
             {
-                DEBUG_PRINT("bad cmd");
-                break;
+                DEBUG_PRINT("wrong command");
+                continue;
             }
-
         }
 
         close(client_fd);

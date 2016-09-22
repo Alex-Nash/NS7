@@ -18,20 +18,17 @@
 */
 int execute_command (char *command_str)
 {
-  char str;
-  memcpy(&str, command_str, 1);
   char power_cmd_str[3];
   char move_cmd_str[8];
 
-  switch (str) {
+  switch (command_str[0]) {
     case 'p':
-      
-      memcpy(power_cmd_str, &(command_str[1]), 3);
+      memcpy(power_cmd_str, (command_str + 1), 3);
       execute_power_cmd(power_cmd_str);
       break;
     case 'm':
       
-      memcpy(move_cmd_str, &(command_str[1]), 8);
+      memcpy(move_cmd_str, (command_str +1), 8);
       execute_move_cmd(move_cmd_str);
       break;
     default:

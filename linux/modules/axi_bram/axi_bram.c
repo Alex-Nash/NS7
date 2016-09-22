@@ -84,7 +84,7 @@ static long bram_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
     u32 *value;
 
-    value = kmalloc(data.size, GFP_KERNEL);
+    value = kmalloc(data.size * sizeof(u32), GFP_KERNEL);
 
     switch (cmd) {
     case AXI_BRAM_WRITE:
