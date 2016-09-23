@@ -3,8 +3,8 @@
 
 #include <inttypes.h>
 
-#define MEM_OFFSET_DASHBOARD    (0x00008600)
-#define MEM_OFFSET_POWER        (MEM_OFFSET_DASHBOARD + 0x08)
+#define MEM_OFFSET_DASHBOARD            (0x00008600)
+#define MEM_OFFSET_POWER                (MEM_OFFSET_DASHBOARD + 0x08)
 #define MEM_OFFSET_COMMAND_LEFT     	(MEM_OFFSET_DASHBOARD + 0x10)
 #define MEM_OFFSET_COMMAND_RIGHT     	(MEM_OFFSET_DASHBOARD + 0x20)
 //#define MEM_OFFSET_RIGHT_COMMAND     	(MEM_OFFSET_DASHBOARD + 0x06)
@@ -51,12 +51,19 @@ int parse_move_command(char *str, struct move_command *cur_command);
 
 int execute_power_cmd(char *command_str);
 
-uint32_t speed_to_delay(uint16_t speed);
+uint32_t speed_to_delay(int speed);
 
-uint32_t speed_to_torq(uint16_t speed);
+uint32_t speed_to_torq(int speed);
 
 int torq_to_speed(uint32_t torq, uint16_t direction);
 
 int speed_smoothing (int cur_speed_value, int prev_speed_value);
+
+
+int speed_smoothing (int cur_speed_value, int prev_speed_value);
+
+int get_speed_value_from_ram(struct move_command *command);
+
+int smoothing_move_command (struct move_command *cur_command);
 
 #endif
