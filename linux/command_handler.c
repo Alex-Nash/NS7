@@ -61,7 +61,16 @@ int execute_move_cmd(char *command_str)
     printf("execute_move_cmd: Error parse move command! \n");
     return -1;
   }
-
+  /*
+  // smoothing move command
+  status = smoothing_move_command( &cur_command);
+  if (status == -1)
+  {
+    printf("execute_move_cmd: Error smoothing! \n");
+    return -1;
+  }
+  */
+  
   // *** Left engine command ***
   // define direction on command bite
   if (cur_command.left_eng_speed >= 0)
@@ -95,8 +104,7 @@ int execute_move_cmd(char *command_str)
   mem_command_right[0] = (uint32_t)(torq | dir);
   // set right engine speed
   mem_command_right[1] = speed_to_delay(cur_command.right_eng_speed);
-
-  status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_RIGHT , mem_command, 2);
+  status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_RIGHT , mem_command_right, 2);
   if ( status == -1)
   {
     printf("execute_move_cmd: Error sending command\n");
@@ -185,31 +193,32 @@ int execute_power_cmd(char *command_str)
   return 0;
 }
 
-uint32_t speed_to_delay(uint16_t speed)
+uint32_t speed_to_delay(int speed)
 {
   uint32_t delay;
+  uint16_t cur_speed = abs(speed);
 
-  if (speed > 100)
-    speed = 100;
-  if (speed < 0)
-    speed = 0;
+  if (cur_speed > 100)
+    cur_speed = 100;
+  if (cur_speed < 0)
+    cur_speed = 0;
 
-  delay = MAX_DELAY - ((MAX_DELAY - MIN_DELAY) * speed / 100.0);
+  delay = MAX_DELAY - ((MAX_DELAY - MIN_DELAY) * cur_speed / 100.0);
 
   return delay;
 }
 
-uint32_t speed_to_torq(uint16_t speed)
+uint32_t speed_to_torq(int speed)
 {
   uint32_t torq;
+  uint16_t cur_speed = abs(speed);
+  if (cur_speed > 100)
+    cur_speed = 100;
+  if (cur_speed < 0)
+    cur_speed = 0;
 
-  if (speed > 100)
-    speed = 100;
-  if (speed < 0)
-    speed = 0;
-
-  torq = MIN_TORQ + ((MAX_TORQ - MIN_TORQ) * speed / 100.0);
-  if (speed == 0)
+  torq = MIN_TORQ + ((MAX_TORQ - MIN_TORQ) * cur_speed / 100.0);
+  if (cur_speed == 0)
     torq = 0;
 
   return torq;
@@ -233,11 +242,65 @@ int torq_to_speed(uint32_t torq, uint16_t direction)
 
 int speed_smoothing (int cur_speed_value, int prev_speed_value)
 {
-  /*
-  if(fabs(cur_speed_value - prev_speed_value) > SMOOTHING)
-  {
+  int step;
+  if (cur_speed_value > prev_speed_value)
+    step = abs(cur_speed_value - prev_speed_value);
+  else
+    step = abs(prev_speed_value - cur_speed_value);
 
+  if(step > SMOOTHING)
+  {
+    if (cur_speed_value > prev_speed_value)
+      return cur_speed_value + SMOOTHING;
+    else
+      return cur_speed_value - SMOOTHING;
   }
- */
+
+  return cur_speed_value;
+}
+
+int get_speed_value_from_ram(struct move_command *command)
+{
+  uint32_t tmp_command;
+  uint16_t torq, direction;
+  int status;
+
+  status = bram_memory_read((uint32_t)MEM_OFFSET_COMMAND_LEFT, &tmp_command, 1);
+  if (status < 0)
+    return -1;
+
+  torq = tmp_command & 0x0000FFFF;
+  direction = tmp_command & 0xFFFF0000;
+  command->left_eng_speed = torq_to_speed(torq, direction);
+
+  status = bram_memory_read((uint32_t)MEM_OFFSET_COMMAND_RIGHT, &tmp_command, 1);
+  if (status < 0)
+    return -1;
+
+  torq = tmp_command & 0x0000FFFF;
+  direction = tmp_command & 0xFFFF0000;
+  command->right_eng_speed = torq_to_speed(torq, direction);
+
+  return 0;
+}
+
+int smoothing_move_command (struct move_command *cur_command)
+{
+  int status;
+  int smoothing_speed;
+  struct move_command prev_move_command;
+
+  status = get_speed_value_from_ram (&prev_move_command);
+  if (status < 0 )
+    return -1;
+
+  smoothing_speed = speed_smoothing(cur_command->left_eng_speed,
+                                    prev_move_command.left_eng_speed);
+  cur_command->left_eng_speed = smoothing_speed;
+
+  smoothing_speed = speed_smoothing(cur_command->right_eng_speed,
+                                    prev_move_command.right_eng_speed);
+  cur_command->right_eng_speed = smoothing_speed;
+
   return 0;
 }

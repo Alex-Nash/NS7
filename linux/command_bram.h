@@ -4,6 +4,7 @@
 #include <inttypes.h>
 
 #define MEM_DEV         "/dev/axi_bram"
+#define BYTE_IN_CELL    4
 
 struct bram_rw_data {
     uint32_t *data;
