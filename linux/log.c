@@ -9,15 +9,15 @@ FILE *log_file;
 // open log file
 int open_log()
 {
-    log_file = fopen((LOG_FILE, "a"));
+    log_file = fopen(LOG_FILE, "a");
 
-    if(file != NULL) return -1;
+    if(log_file != NULL) return -1;
 
     return 0;
 }
 
 // close log
-void close_log();
+void close_log()
 {
     fclose(log_file);
 }
@@ -31,9 +31,9 @@ void log(const char *format, ...)
     strftime(time_buf, sizeof(time_buf), "%d-%m-%y %H:%M", tm);
 
     va_list args;
-    va_start(args, format );
-    fprintf(file,"(%s) ", time_buf);
-    vfprintf(file, format, args );
-    va_end( args );
-    fclose(file);
+    va_start(args, format);
+    fprintf(log_file,"(%s) ", time_buf);
+    vfprintf(log_file, format, args);
+    va_end(args);
+    fclose(log_file);
 }

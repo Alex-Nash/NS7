@@ -21,17 +21,31 @@
 // save monitor pid
 int set_pid_file(char *filename)
 {
-    FILE *file;
+    int pid_fd;
+    char str[256];
 
-    file = fopen(filename, "w+");
-    if (file)
+    pid_fd = open(filename, O_RDWR|O_CREAT, 0640);
+
+    if(pid_fd == -1)
     {
-        fprintf(file, "%u", getpid());
-        fclose(file);
-        return 0;
+        // Can't open lockfile
+        return -1;
     }
 
-    return -1;
+    if(lockf(pid_fd, F_TLOCK, 0) == -1)
+    {
+        // Can't lock file
+        return -1;
+    }
+
+    // Get current PID
+    sprintf(str, "%d\n", getpid());
+    // Write PID to lockfile
+    write(pid_fd, str, strlen(str));
+
+    close(pid_fd);
+
+    return 0;
 }
 
 // load monitor pid
@@ -240,6 +254,103 @@ int monitor_proc()
 	return status;
 }
 
+/**
+ *  This function will daemonize this app
+ */
+static int daemonize()
+{
+    pid_t pid = 0;
+    int fd;
+
+    // Fork off the parent process
+    pid = fork();
+
+    // An error occurred
+    if(pid == -1)
+    {
+        log("Fail to fork process: %s\n", strerror(errno));
+        return -1;
+    }
+
+    // Success: Let the parent terminate
+    if(pid > 0)
+    {
+        exit(0);
+    }
+
+    // On success: The child process becomes session leader
+    if(setsid() == -1)
+    {
+        log("Fail to create new session: %s", strerror(errno));
+        return -1;
+    }
+
+    // Ignore signal sent from child to parent process
+    signal(SIGCHLD, SIG_IGN);
+
+    // Fork off for the second time
+    pid = fork();
+
+    // An error occurred
+    if(pid == -1)
+    {
+        log("Fail to fork process for the second time: %s\n", strerror(errno));
+        return -1;
+    }
+
+    // Let the parent terminate
+    if(pid > 0)
+    {
+        exit(0);
+    }
+
+    // Set new file permissions
+    umask(0);
+
+    /* Change the working directory to the root directory
+     or another appropriated directory */
+    if(chdir("/") == -1)
+    {
+        log("Fail to change working dir: %s", strerror(errno));
+        return -1;
+    }
+
+    // Close all open file descriptors
+    for(fd = sysconf(_SC_OPEN_MAX); fd > 0; fd--)
+    {
+        close(fd);
+    }
+
+    /* Reopen stdin (fd = 0), stdout (fd = 1), stderr (fd = 2) */
+    /*stdin = fopen("/dev/null", "r");
+    stdout = fopen("/dev/null", "w+");
+    stderr = fopen("/dev/null", "w+");*/
+
+    // Try to write PID of daemon to lockfile
+    char str[256];
+    int pid_fd;
+
+    pid_fd = open(PID_FILE, O_RDWR|O_CREAT, 0640);
+    if(pid_fd < 0)
+    {
+        // Can't open lockfile
+        log("Fail to open pid file: %s", strerror(errno));
+        return -1;
+    }
+    if(lockf(pid_fd, F_TLOCK, 0) < 0)
+    {
+        // Can't lock file
+        log("Fail to lock pid file: %s", strerror(errno));
+        return -1;
+    }
+    // Get current PID
+    sprintf(str, "%d\n", getpid());
+    // Write PID to lockfile
+    write(pid_fd, str, strlen(str));
+
+    return 0;
+}
+
 void usage()
 {
     printf("Usage: ./daemon start\n");
@@ -264,7 +375,7 @@ int main(int argc, char** argv)
     if(!start && !stop)
     {
         usage();
-        return -1;
+        exit(-1);
     }
 
     int status;
@@ -278,13 +389,13 @@ int main(int argc, char** argv)
         {
             printf("Error: faild to connect daemon process\n");
             printf("Try to start first!\n");
-            exit(1);
+            exit(-1);
         }
 
         if(pid <= 0) {
             printf("Error: wrong pid of daemon\n");
             unlink(PID_FILE);
-            exit(1);
+            exit(-1);
         }
 
         printf("Try to stop daemon (%u)\n", pid);
@@ -295,35 +406,19 @@ int main(int argc, char** argv)
         {
             printf("kill: %s\n", strerror(errno));
             unlink(PID_FILE);
-            exit(1);
+            exit(-1);
         }
 
         printf("Daemon stoped!\n");
 
-        exit(1);
+        exit(-1);
     }
 
     if(start && (status != -1))
     {
         printf("Daemon is already running\n");
-        exit(1);
+        exit(-1);
     }
-
-    pid = fork(); // create monitor process
-
-    if (pid == -1)
-    {
-        printf("Fail to start daemon: %s\n", strerror(errno));
-        return -1;
-    }
-    else if (pid > 0)
-    {
-        printf("Starting daemon....\nSee log for more information\n");
-        return 0;
-    }
-
-    // monitor
-    int sid;
 
     // open log
     if(open_log() == -1)
@@ -332,26 +427,11 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    umask(0); // all privilage for created file
-    sid = setsid(); // create new session
-    if(sid == -1)
+    if(daemonize() == -1)
     {
-        log("Fail to create new session: %s\n", strerror(errno));
-        return -1;
+        exit(-1);
     }
 
-    if(chdir("/") == -1) // go to disk root
-    {
-        log("Fail to change working dir: %s", strerror(errno));
-        return -1;
-    }
-
-    // close input/output descriptor
-    close(STDIN_FILENO);
-    close(STDOUT_FILENO);
-    close(STDERR_FILENO);
-
-    status = monitor_proc();
 
     return status;
 }
