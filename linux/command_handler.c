@@ -61,16 +61,18 @@ int execute_move_cmd(char *command_str)
     printf("execute_move_cmd: Error parse move command! \n");
     return -1;
   }
-  /*
+
   // smoothing move command
-  status = smoothing_move_command( &cur_command);
-  if (status == -1)
+  if (SMOOTHING_FLAG)
   {
-    printf("execute_move_cmd: Error smoothing! \n");
-    return -1;
+    status = smoothing_move_command( &cur_command);
+    if (status == -1)
+    {
+      printf("execute_move_cmd: Error smoothing! \n");
+      return -1;
+    }
   }
-  */
-  
+
   // *** Left engine command ***
   // define direction on command bite
   if (cur_command.left_eng_speed >= 0)
@@ -230,9 +232,9 @@ int torq_to_speed(uint32_t torq, uint16_t direction)
   int speed;
 
   if (torq > MAX_TORQ)
-    speed = MAX_TORQ;
+    torq = MAX_TORQ;
   if (torq < MIN_TORQ)
-    speed = MIN_TORQ;
+    torq = MIN_TORQ;
 
   speed = (torq - MIN_TORQ) * 100 / (MAX_TORQ - MIN_TORQ);
   if (direction == ENG_DIRECTION_REVERSE)
@@ -251,9 +253,9 @@ int speed_smoothing (int cur_speed_value, int prev_speed_value)
   if(step > SMOOTHING)
   {
     if (cur_speed_value > prev_speed_value)
-      return cur_speed_value + SMOOTHING;
+      return prev_speed_value + SMOOTHING;
     else
-      return cur_speed_value - SMOOTHING;
+      return prev_speed_value - SMOOTHING;
   }
 
   return cur_speed_value;
