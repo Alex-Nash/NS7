@@ -95,7 +95,7 @@ int init_command_socket(int port)
     }
 
     // main accept() only one connection
-    while(1)
+    while(running)
     {
         //int client_fd; // new connection or reset of connetction
         struct sockaddr_in their_addr; // connector's address information
@@ -114,15 +114,16 @@ int init_command_socket(int port)
         int numbytes;
         char cmd[CMDSIZE];
 
-        while(1)
+        while(running)
         {
-
-            if((numbytes = recv(clientfd, cmd, CMDSIZE, 0)) == -1) {
+            if((numbytes = recv(clientfd, cmd, CMDSIZE, 0)) == -1)
+            {
                 write_log("recv: %s\n", strerror(errno));
                 break;
             }
 
-            if(numbytes == 0) {
+            if(numbytes == 0)
+            {
                 write_log("connection lost\n");
                 break;
             }

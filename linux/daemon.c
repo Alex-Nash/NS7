@@ -18,6 +18,8 @@
 
 #define PID_FILE "/var/run/ns7_daemon.pid"
 
+int pid_fd;
+
 // save monitor pid
 int set_pid_file(char *filename)
 {
@@ -255,6 +257,40 @@ int monitor_proc()
 }
 
 /**
+ * Callback function for handling signals.
+ * sig	identifier of signal
+ */
+void handle_signal(int sig)
+{
+    if(sig == SIGINT)
+    {
+        log("Stopping daemon ...\n");
+        // Unlock and close lockfile
+        if(pid_fd != -1)
+        {
+            lockf(pid_fd, F_ULOCK, 0);
+            close(pid_fd);
+        }
+
+        close(clientfd);
+        close(sockfd);
+
+        // Try to delete lockfile
+        if(pid_file_name != NULL)
+        {
+            unlink(pid_file_name);
+        }
+        running = 0;
+        // Reset signal handling to default behavior
+        signal(SIGINT, SIG_DFL);
+    }
+    else if(sig == SIGCHLD)
+    {
+        log( "Received SIGCHLD signal\n");
+    }
+}
+
+/**
  *  This function will daemonize this app
  */
 static int daemonize()
@@ -328,7 +364,6 @@ static int daemonize()
 
     // Try to write PID of daemon to lockfile
     char str[256];
-    int pid_fd;
 
     pid_fd = open(PID_FILE, O_RDWR|O_CREAT, 0640);
     if(pid_fd < 0)
@@ -378,14 +413,13 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
-    int status;
     int pid;
 
-    status = open_pid_file(PID_FILE, &pid);
+    pid_fd = open(PID_FILE, O_RD);
 
     if(stop) // stop daemon
     {
-        if(status == -1)
+        if(pid_fd == -1)
         {
             printf("Error: faild to connect daemon process\n");
             printf("Try to start first!\n");
@@ -398,23 +432,21 @@ int main(int argc, char** argv)
             exit(-1);
         }
 
-        printf("Try to stop daemon (%u)\n", pid);
+        printf("Send stop signal to daemon (%u)\n", pid);
 
-        status = kill(pid, SIGQUIT);
-
-        if(status == -1)
+        if(kill(pid, SIGINT) == -1)
         {
             printf("kill: %s\n", strerror(errno));
             unlink(PID_FILE);
             exit(-1);
         }
 
-        printf("Daemon stoped!\n");
+        printf("See log for stopping status!\n");
 
         exit(-1);
     }
 
-    if(start && (status != -1))
+    if(start && (pid_fd != -1))
     {
         printf("Daemon is already running\n");
         exit(-1);
@@ -432,6 +464,14 @@ int main(int argc, char** argv)
         exit(-1);
     }
 
+    /* Daemon will handle two signals */
+    signal(SIGINT, handle_signal);
+
+    write_log("Started\n");
+
+    status = init_command_socket(32000);
+
+    write_log("Stop\n");
 
     return status;
 }

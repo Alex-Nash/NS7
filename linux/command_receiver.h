@@ -13,6 +13,7 @@
 
 int sockfd;
 int clientfd;
+int running;
 
 int init_command_socket(int port);
 
