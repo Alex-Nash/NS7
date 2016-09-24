@@ -1,17 +1,19 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdarg.h>
+#include <sys/file.h>
+#include <string.h>
 
 #define LOG_FILE "/var/log/ns7_daemon.log"
 
-FILE *log_file;
+int log_file;
 
 // open log file
 int open_log()
 {
-    log_file = fopen(LOG_FILE, "a");
+    log_file = open(LOG_FILE, O_RDWR | O_CREAT);
 
-    if(log_file != NULL) return -1;
+    if(log_file == -1) return -1;
 
     return 0;
 }
@@ -19,21 +21,25 @@ int open_log()
 // close log
 void close_log()
 {
-    fclose(log_file);
+    close(log_file);
 }
 
 // log function
 void log(const char *format, ...)
 {
+    char time_buf[64];
+    char log_buf[256];
+
     time_t cur_time = time(NULL);
     struct tm *tm = localtime(&cur_time);
-    char time_buf[64];
+
     strftime(time_buf, sizeof(time_buf), "%d-%m-%y %H:%M", tm);
 
     va_list args;
     va_start(args, format);
-    fprintf(log_file,"(%s) ", time_buf);
-    vfprintf(log_file, format, args);
+    sprintf(log_buf, "(%s) ", time_buf);
+    write(log_file, log_buf, strlen(log_buf));
+    sprintf(log_buf, format, args);
+    write(log_file, log_buf, strlen(log_buf));
     va_end(args);
-    fclose(log_file);
 }
