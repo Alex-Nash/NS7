@@ -6,12 +6,21 @@
 
 #define LOG_FILE "/var/log/ns7_daemon.log"
 
+#include "log.h"
+
 int log_file;
 
 // open log file
 int open_log()
 {
-    log_file = open(LOG_FILE, O_RDWR | O_CREAT);
+    if(log_filename == NULL)
+    {
+        log_file = open(LOG_FILE, O_RDWR | O_CREAT);
+    }
+    else
+    {
+        log_file = open(log_filename, O_RDWR | O_CREAT);
+    }
 
     if(log_file == -1) return -1;
 
@@ -37,9 +46,16 @@ void log(const char *format, ...)
 
     va_list args;
     va_start(args, format);
+
+    // log time
     sprintf(log_buf, "(%s) ", time_buf);
     write(log_file, log_buf, strlen(log_buf));
+    if(!daemonized) printf("%s", log_buf);
+
+    // log message
     sprintf(log_buf, format, args);
     write(log_file, log_buf, strlen(log_buf));
+    if(!daemonized) printf("%s", log_buf);
+
     va_end(args);
 }

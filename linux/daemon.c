@@ -7,18 +7,18 @@
 #include <errno.h>
 #include <wait.h>
 #include <pthread.h>
+#include <getopt.h>
 
 #include "log.h"
 #include "command_receiver.h"
 
-#define DAEMON_NEED_WORK			1
-#define DAEMON_NEED_TERMINATE       2
+#define PID_FILE    "/var/run/ns7_daemon.pid"
+#define INIT_FILE   "ns7_mb.bin"
+#define PORT        32000;
 
-#define DAEMON_START_ATTEMP         10
-
-#define PID_FILE "/var/run/ns7_daemon.pid"
-
+static char *app_name = NULL;
 int pid_fd;
+
 
 
 /**
@@ -151,82 +151,174 @@ static int daemonize()
 
 void usage()
 {
-    printf("Usage: ./daemon start\n");
-    printf("       ./daemon stop\n");
+    printf("\n Usage: %s [OPTIONS]\n\n", app_name);
+    printf("\n");
+    printf("  Options:\n");
+    printf("\n");
+    printf("   -h --help                 Print this help\n");
+    printf("\n");
+    printf("   -i --init      filename   Init microblaze from file\n");
+    printf("   (default the working directory filename: ns7-mb.bin)\n");
+    printf("\n");
+    printf("   -p --port      port num   Listen port for server\n");
+    printf("   (default port number: 32000)\n");
+    printf("\n");
+    printf("   -s --start                Start server of motor commands\n");
+    printf("\n");
+    printf("   -c --stop                 Stop server\n");
+    printf("\n");
+    printf("   -d --daemon               Daemonize server\n");
+    printf("\n");
+    printf("   -l --log_file  filename   Write logs to the file\n");
+    printf("   (default '/var/log/' filename: ns7-log.log)\n");
+    printf("");
+    printf("\n");
 }
 
 
 int main(int argc, char** argv)
 {
-    if(argc != 2)
+    app_name = argv[0];
+
+    if(argc == 1)
     {
         usage();
         return -1;
     }
 
+
+    static struct option long_options[] = {
+        {"help", no_argument, 0, 'h'},
+        {"init", optional_argument, 0, 'i'},
+        {"port", optional_argument, 0, 'p'},
+        {"start", no_argument, 0, 's'},
+        {"stop", no_argument, 0, 'c'},
+        {"daemon", no_argument, 0, 'd'},
+        {"log_file", optional_argument, 0, 'l'},
+        {NULL, 0, 0, 0}
+    };
+    int value, option_index = 0, ret;
+
+    int init = 0;
+    int port_num = PORT;
+    char *init_filename;
+
     int start = 0;
     int stop = 0;
 
-    if(strcmp(argv[1], "start") == 0) start = 1;
-    if(strcmp(argv[1], "stop") == 0) stop = 1;
-
-    if(!start && !stop)
-    {
-        usage();
-        exit(-1);
+    // Try to process all command line arguments
+    while( (value = getopt_long(argc, argv, "i::p::l::scdh", long_options, &option_index)) != -1) {
+        switch(value) {
+        case 'h':
+            usage();
+            return 0;
+        case 'i':
+            init = 1;
+            if(optarg != NULL)
+            {
+                init_filename = strdup(optarg);
+            }
+            else
+            {
+                init_filename = INIT_FILE;
+            }
+            break;
+        case 'p':
+            if(optarg != NULL)
+            {
+                port_num = atoi(optarg);
+            }
+            else
+            {
+                port_num = PORT;
+            }
+            break;
+        case 's':
+            start = 1;
+            break;
+        case 'c':
+            stop = 1;
+            break;
+        case 'd':
+            daemonized = 1;
+            break;
+        case 'l':
+            if(optarg != NULL)
+            {
+                log_filename = strdup(optarg);
+            }
+            return 0;
+        case '?':
+            usage();
+            return 0;
+        default:
+            break;
+        }
     }
 
+    if(init)
+    {
+        printf("Try to initialize microblaze...\n");
+        printf("some code\n");
+    }
+
+    if(start && stop)
+    {
+        printf("Try to restart server\n");
+    }
 
     int pid;
     char buf[256];
 
     pid_fd = open(PID_FILE, O_RDONLY);
 
-    if(stop) // stop daemon
+    // stop daemon server
+    if(stop)
     {
         if(pid_fd == -1)
         {
-            printf("Fail to connect daemon process\n");
-            printf("Try to start first!\n");
-            exit(-1);
+            printf("Fail to connect to server process for stoping\n");
         }
 
         if(read(pid_fd, buf, 256) == -1)
         {
-            printf("Fail to read pid of daemon\n");
+            printf("Fail to read pid of server\n");
             close(pid_fd);
             unlink(PID_FILE);
-            exit(-1);
         }
-
-        pid = atoi(buf);
-
-        if(pid<= 0) {
-            printf("Fail: wrong pid of daemon\n");
-            close(pid_fd);
-            unlink(PID_FILE);
-            exit(-1);
-        }
-
-        printf("Send stop signal to daemon (%u)\n", pid);
-
-        if(kill(pid, SIGINT) == -1)
+        else
         {
-            printf("kill: %s\n", strerror(errno));
-            unlink(PID_FILE);
-            exit(-1);
+            pid = atoi(buf);
+
+            if(pid <= 0)
+            {
+                printf("Fail: wrong pid of daemon\n");
+                close(pid_fd);
+                unlink(PID_FILE);
+            }
+
+            printf("Send stop signal to server (%u)\n", pid);
+
+            if(kill(pid, SIGINT) == -1)
+            {
+                printf("kill: %s\n", strerror(errno));
+                unlink(PID_FILE);
+            }
+
+            printf("See log for stopping status!\n");
         }
-
-        printf("See log for stopping status!\n");
-
-        exit(-1);
     }
 
-    if(start && (pid_fd != -1))
+    if(start && (pid_fd != -1) && !stop)
     {
-        printf("Daemon is already running\n");
-        exit(-1);
+        printf("Server is already running\n");
+        return -1;
     }
+
+    if(!start) return 0;
+
+    printf("Try to start server\n");
+
 
     // open log
     if(open_log() == -1)
@@ -235,22 +327,27 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    if(daemonize() == -1)
+    if(daemonized)
     {
-        log("Fail to daemonize process\n");
-        exit(-1);
+        printf("Server in demonized status!\n");
+        printf("See log file for status.\n");
+        if(daemonize() == -1)
+        {
+            log("Fail to daemonize process\n");
+            return -1;
+        }
+
+        log("Daemonize process succses\n");
+
+        // Daemon will handle signals
+        signal(SIGINT, handle_signal);
     }
-
-    log("Daemonize process succses\n");
-
-    // Daemon will handle signals
-    signal(SIGINT, handle_signal);
 
     log("Starting\n");
 
     running = 1;
 
-    if(init_command_socket(32000) == -1)
+    if(init_command_socket(port_num) == -1)
     {
         if(pid_fd != -1)
         {
@@ -258,7 +355,7 @@ int main(int argc, char** argv)
             close(pid_fd);
         }
 
-        unlink(PID_FILE);
+        if(daemonized) unlink(PID_FILE);
     }
 
     log("Stop\n");
