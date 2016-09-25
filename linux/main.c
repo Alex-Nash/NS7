@@ -11,6 +11,8 @@
 
 #include "log.h"
 #include "command_receiver.h"
+#include "bin_file_loader.h"
+#include "gpio.h"
 
 #define PID_FILE    "/var/run/ns7_daemon.pid"
 #define INIT_FILE   "ns7_mb.bin"
@@ -171,6 +173,9 @@ void usage()
     printf("\n");
     printf("   -l --log_file  filename   Write logs to the file\n");
     printf("   (default '/var/log/' filename: ns7-log.log)\n");
+    printf("\n");
+    printf("   -m --microblaze value     Enable or disable GPIO reset.\n");
+    printf("   (set value enable or disable)\n");
     printf("");
     printf("\n");
 }
@@ -195,6 +200,7 @@ int main(int argc, char** argv)
         {"stop", no_argument, 0, 'c'},
         {"daemon", no_argument, 0, 'd'},
         {"log_file", optional_argument, 0, 'l'},
+        {"microblaze", required_argument, 0, 'm'},
         {NULL, 0, 0, 0}
     };
     int value, option_index = 0;
@@ -203,13 +209,16 @@ int main(int argc, char** argv)
     int port_num = 0;
     char *init_filename;
 
-    int start = 0;
-    int stop = 0;
+    int start_srv = 0;
+    int stop_srv = 0;
+
+    int enable_mb = 0;
+    int disable_mb = 0;
 
     char *my_optarg;
 
     // Try to process all command line arguments
-    while( (value = getopt_long(argc, argv, "i::p::l::scdh", long_options, &option_index)) != -1) {
+    while( (value = getopt_long(argc, argv, "i::p::l::scdhm:", long_options, &option_index)) != -1) {
         switch(value) {
         case 'h':
             usage();
@@ -256,10 +265,10 @@ int main(int argc, char** argv)
             printf("port - %d ---- %s\n", port_num, optarg);
             break;
         case 's':
-            start = 1;
+            start_srv= 1;
             break;
         case 'c':
-            stop = 1;
+            stop_srv = 1;
             break;
         case 'd':
             daemonized = 1;
@@ -278,6 +287,24 @@ int main(int argc, char** argv)
             if(my_optarg != NULL)
                 log_filename = strdup(my_optarg);
             return 0;
+        case 'm':
+            if(optarg != NULL)
+            {
+                if(strcmp(optarg, "enable") == 0)
+                {
+                    enable_mb = 1;
+                    disable_mb = 0;
+                    break;
+                }
+                if(strcmp(optarg, "disable") == 0)
+                {
+                    disable_mb = 1;
+                    enable_mb = 0;
+                    break;
+                }
+            }
+            usage();
+            return -1;
         case '?':
             usage();
             return 0;
@@ -289,12 +316,46 @@ int main(int argc, char** argv)
     if(init)
     {
         printf("Try to initialize microblaze...\n");
-        printf("some code\n");
+        // Set cos array
+        if (set_cos_array() == -1)
+        {
+            printf("set_cos_array: error set cos array\n");
+            return -1;
+        }
+        printf("Load cos array... ok!\n");\
+
+        // Load bin file to the memmory
+        if (file_loader(init_filename) == -1)
+        {
+            printf("file_loader: error load file\n");
+            return -1;
+        }
+        printf("Load binary file... ok!\n");
     }
 
-    if(start && stop)
+    if(enable_mb)
     {
-        printf("Try to restart server\n");
+        printf("Try to enable GPIO reste...\n");
+        if(mb_start() == -1)
+        {
+            printf("reset: error enable GPIO\n");
+        }
+        printf("Microblaze GPIO reste ENABLE!\n");
+    }
+
+    if(disable_mb)
+    {
+        printf("Try to disable GPIO reste...\n");
+        if(mb_stop() == -1)
+        {
+            printf("reset: error enable GPIO\n");
+        }
+        printf("Microblaze GPIO reste DISABLE!\n");
+    }
+
+    if(start_srv && stop_srv)
+    {
+        printf("Try to restart server...\n");
     }
 
     int pid;
@@ -303,7 +364,7 @@ int main(int argc, char** argv)
     pid_fd = open(PID_FILE, O_RDONLY);
 
     // stop daemon server
-    if(stop)
+    if(stop_srv)
     {
         if(pid_fd == -1)
         {
@@ -339,15 +400,15 @@ int main(int argc, char** argv)
         }
     }
 
-    if(start && (pid_fd != -1) && !stop)
+    if(start_srv && (pid_fd != -1) && !stop_srv)
     {
         printf("Server is already running\n");
         return -1;
     }
 
-    if(!start) return 0;
+    if(!start_srv) return 0;
 
-    printf("Try to start server\n");
+    printf("Try to start server...\n");
 
 
     // open log
@@ -367,13 +428,13 @@ int main(int argc, char** argv)
             return -1;
         }
 
-        log("Daemonize process succses\n");
+        log("Daemonize process... ok!\n");
 
         // Daemon will handle signals
         signal(SIGINT, handle_signal);
     }
 
-    log("Starting\n");
+    log("Starting...\n");
 
     running = 1;
 

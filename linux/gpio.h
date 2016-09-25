@@ -1,9 +1,9 @@
 #ifndef GPIO_H
 #define GPIO_H
 
+#include <inttypes.h>
+
 #define GPIO_MB_RESET_PIN    960
-
-
 
 int mb_start();
 
