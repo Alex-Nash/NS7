@@ -197,14 +197,16 @@ int main(int argc, char** argv)
         {"log_file", optional_argument, 0, 'l'},
         {NULL, 0, 0, 0}
     };
-    int value, option_index = 0, ret;
+    int value, option_index = 0;
 
     int init = 0;
-    int port_num = PORT;
+    int port_num = 0;
     char *init_filename;
 
     int start = 0;
     int stop = 0;
+
+    char *my_optarg;
 
     // Try to process all command line arguments
     while( (value = getopt_long(argc, argv, "i::p::l::scdh", long_options, &option_index)) != -1) {
@@ -214,14 +216,20 @@ int main(int argc, char** argv)
             return 0;
         case 'i':
             init = 1;
-            if(optarg != NULL)
+            my_optarg = NULL;
+            if(!optarg
+               && optind < argc // make sure optind is valid
+               && NULL != argv[optind] // make sure it's not a null string
+               && '\0' != argv[optind][0] // ... or an empty string
+               && '-' != argv[optind][0] // ... or another option
+              )
             {
-                init_filename = strdup(optarg);
+                my_optarg = argv[optind++];
             }
+            if(my_optarg != NULL)
+                init_filename = strdup(my_optarg);
             else
-            {
                 init_filename = INIT_FILE;
-            }
             break;
         case 'p':
             if(optarg != NULL)
@@ -230,8 +238,22 @@ int main(int argc, char** argv)
             }
             else
             {
-                port_num = PORT;
+                my_optarg = NULL;
+                if(!optarg
+                   && optind < argc // make sure optind is valid
+                   && NULL != argv[optind] // make sure it's not a null string
+                   && '\0' != argv[optind][0] // ... or an empty string
+                   && '-' != argv[optind][0] // ... or another option
+                  )
+                {
+                    my_optarg = argv[optind++];
+                }
+                if(my_optarg != NULL)
+                    port_num = atoi(my_optarg);
+                else
+                    port_num = PORT;
             }
+            printf("port - %d ---- %s\n", port_num, optarg);
             break;
         case 's':
             start = 1;
@@ -243,10 +265,18 @@ int main(int argc, char** argv)
             daemonized = 1;
             break;
         case 'l':
-            if(optarg != NULL)
+            my_optarg = NULL;
+            if(!optarg
+               && optind < argc // make sure optind is valid
+               && NULL != argv[optind] // make sure it's not a null string
+               && '\0' != argv[optind][0] // ... or an empty string
+               && '-' != argv[optind][0] // ... or another option
+              )
             {
-                log_filename = strdup(optarg);
+                my_optarg = argv[optind++];
             }
+            if(my_optarg != NULL)
+                log_filename = strdup(my_optarg);
             return 0;
         case '?':
             usage();

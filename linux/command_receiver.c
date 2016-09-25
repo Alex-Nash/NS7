@@ -88,12 +88,6 @@ int init_command_socket(int port)
         return -1;
     }
 
-    // Set cos array
-    //if (set_cos_array() < 0) {
-    //    log("set_cos_array: error set cos array\n");
-    //    return -1;
-    //}
-
     // main accept() only one connection
     while(running)
     {
