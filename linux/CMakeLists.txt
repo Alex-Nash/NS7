@@ -10,7 +10,7 @@ set(EXECUTABLE_OUTPUT_PATH "bin")
 set(LIBRARY_OUTPUT_DIRECTORY "lib")
 
 set(SOURCE_EXECUTABLE main.c)
-set(SOURCE_LIBRARY command_receiver.c command_bram.c command_handler.c cos.c log.c gpio.c bin_file_loader.c)
+set(SOURCE_LIBRARY command_receiver.c command_bram.c command_handler.c log.c gpio.c bin_file_loader.c)
 
 #add_library(bram STATIC command_bram.c)
 #add_library(handler STATIC command_handler.c)

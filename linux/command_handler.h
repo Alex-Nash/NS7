@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-#define MEM_OFFSET_DASHBOARD            (0x00008600)
+#define MEM_OFFSET_DASHBOARD            (0x00000FF0)
 #define MEM_OFFSET_POWER                (MEM_OFFSET_DASHBOARD + 0x08)
 #define MEM_OFFSET_COMMAND_LEFT     	(MEM_OFFSET_DASHBOARD + 0x10)
 #define MEM_OFFSET_COMMAND_RIGHT     	(MEM_OFFSET_DASHBOARD + 0x20)

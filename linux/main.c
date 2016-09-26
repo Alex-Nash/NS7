@@ -15,7 +15,7 @@
 #include "gpio.h"
 
 #define PID_FILE    "/var/run/ns7_daemon.pid"
-#define INIT_FILE   "ns7_mb.bin"
+#define INIT_FILE   "mb_server.bin"
 #define PORT        32000;
 
 static char *app_name = NULL;
@@ -160,7 +160,7 @@ void usage()
     printf("   -h --help                 Print this help\n");
     printf("\n");
     printf("   -i --init      filename   Init microblaze from file\n");
-    printf("   (default the working directory filename: ns7-mb.bin)\n");
+    printf("   (default the working directory filename: mb-server.bin)\n");
     printf("\n");
     printf("   -p --port      port num   Listen port for server\n");
     printf("   (default port number: 32000)\n");
@@ -262,7 +262,6 @@ int main(int argc, char** argv)
                 else
                     port_num = PORT;
             }
-            printf("port - %d ---- %s\n", port_num, optarg);
             break;
         case 's':
             start_srv= 1;
@@ -274,6 +273,12 @@ int main(int argc, char** argv)
             daemonized = 1;
             break;
         case 'l':
+            if(optarg != NULL)
+            {
+                log_filename = strdup(optarg);
+                break;
+            }
+
             my_optarg = NULL;
             if(!optarg
                && optind < argc // make sure optind is valid
@@ -286,7 +291,7 @@ int main(int argc, char** argv)
             }
             if(my_optarg != NULL)
                 log_filename = strdup(my_optarg);
-            return 0;
+            break;
         case 'm':
             if(optarg != NULL)
             {
@@ -317,12 +322,12 @@ int main(int argc, char** argv)
     {
         printf("Try to initialize microblaze...\n");
         // Set cos array
-        if (set_cos_array() == -1)
+        /*if (set_cos_array() == -1)
         {
             printf("set_cos_array: error set cos array\n");
             return -1;
         }
-        printf("Load cos array... ok!\n");\
+        printf("Load cos array... ok!\n");*/
 
         // Load bin file to the memmory
         if (file_loader(init_filename) == -1)
