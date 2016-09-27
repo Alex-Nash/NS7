@@ -3,6 +3,7 @@
 #include <string.h>
 #include <inttypes.h>
 
+#include "log.h"
 #include "command_bram.h"
 #include "command_handler.h"
 
@@ -31,7 +32,7 @@ int execute_command (char *command_str)
       execute_move_cmd(move_cmd_str);
       break;
     default:
-      printf ("execute_command: Wrong command!\n");
+      log ("execute_command: Wrong command!\n");
       return -1;
   }
 
@@ -58,7 +59,7 @@ int execute_move_cmd(char *command_str)
   status = parse_move_command(command_str, &cur_command);
   if (status == -1)
   {
-    printf("execute_move_cmd: Error parse move command! \n");
+    log("execute_move_cmd: Error parse move command! \n");
     return -1;
   }
 
@@ -68,7 +69,7 @@ int execute_move_cmd(char *command_str)
     status = smoothing_move_command( &cur_command);
     if (status == -1)
     {
-      printf("execute_move_cmd: Error smoothing! \n");
+      log("execute_move_cmd: Error smoothing! \n");
       return -1;
     }
   }
@@ -90,7 +91,7 @@ int execute_move_cmd(char *command_str)
   status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_LEFT , mem_command_left, 2);
   if ( status == -1)
   {
-    printf("execute_move_cmd: Error sending command\n");
+    log("execute_move_cmd: Error sending command\n");
     return -1;
   }
 
@@ -109,7 +110,7 @@ int execute_move_cmd(char *command_str)
   status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_RIGHT , mem_command_right, 2);
   if ( status == -1)
   {
-    printf("execute_move_cmd: Error sending command\n");
+    log("execute_move_cmd: Error sending command\n");
     return -1;
   }
 
@@ -179,7 +180,7 @@ int execute_power_cmd(char *command_str)
   }
   else
   {
-    printf("execute_power_cmd: Error parse power command! \n");
+    log("execute_power_cmd: Error parse power command! \n");
     return -1;
   }
 
@@ -188,7 +189,7 @@ int execute_power_cmd(char *command_str)
   status = bram_memory_write((uint32_t)MEM_OFFSET_POWER , &mem_command, 1);
   if ( status == -1)
   {
-    printf("Error sending command\n");
+    log("Error sending command\n");
     return -1;
   }
 

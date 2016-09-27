@@ -4,6 +4,7 @@
 #include <sys/mman.h>
 #include <inttypes.h>
 
+#include "log.h"
 #include "command_bram.h"
 
 #define MEM_OFFSET 0x00000000
@@ -16,18 +17,18 @@ int file_loader(char *filename)
     struct stat statbuf;
 
     if((src_file = open(filename, O_RDONLY)) < 0 ) {
-        printf("can't open file %s for reading\n", filename);
+        log("can't open file %s for reading\n", filename);
         return -1;
     }
 
     if(fstat(src_file, &statbuf) < 0 ) {
-        printf("can't obtain file size\n");
+        log("can't obtain file size\n");
         close(src_file);
         return -1;
     }
 
     if((src_ptr = mmap(0, statbuf.st_size, PROT_READ, MAP_SHARED, src_file, 0)) == MAP_FAILED ) {
-        printf("failed to map file to the memory\n");
+        log("failed to map file to the memory\n");
         close(src_file);
         return -1;
     }

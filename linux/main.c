@@ -333,13 +333,6 @@ int main(int argc, char** argv)
     {
         printf("Try to initialize microblaze...\n");
         printf("file: %s\n", init_filename);
-        // Set cos array
-        /*if (set_cos_array() == -1)
-        {
-            printf("set_cos_array: error set cos array\n");
-            return -1;
-        }
-        printf("Load cos array... ok!\n");*/
 
         // Load bin file to the memmory
         if (file_loader(init_filename) == -1)

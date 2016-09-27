@@ -14,7 +14,6 @@
 #include <string.h>
 
 #include "log.h"
-#include "cos.h"
 #include "command_handler.h"
 #include "command_bram.h"
 #include "command_receiver.h"
