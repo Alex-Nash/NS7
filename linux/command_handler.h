@@ -15,12 +15,13 @@
 #define ENG_DISABLE               0x00
 #define ENG_ENABLE                0x01
 
-#define SMOOTHING_FLAG    0    //  1 - enable smoothing 0 - disable smoothing
 #define SMOOTHING		  5
 #define MIN_DELAY         0x3F
 #define MAX_DELAY         0x1FFFE
 #define MIN_TORQ          0x7FFF
 #define MAX_TORQ          0xFFFE
+
+int SMOOTHING_FLAG;     //  1 - enable smoothing 0 - disable smoothing
 
 
 struct move_command

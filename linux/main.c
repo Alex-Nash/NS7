@@ -11,11 +11,12 @@
 
 #include "log.h"
 #include "command_receiver.h"
+#include "command_handler.h"
 #include "bin_file_loader.h"
 #include "gpio.h"
 
 #define PID_FILE    "/var/run/ns7_daemon.pid"
-#define INIT_FILE   "mb_server.bin"
+#define INIT_FILE   "ns7_mb.bin"
 #define PORT        32000;
 
 static char *app_name = NULL;
@@ -160,7 +161,7 @@ void usage()
     printf("   -h --help                 Print this help\n");
     printf("\n");
     printf("   -i --init      filename   Init microblaze from file\n");
-    printf("   (default the working directory filename: mb-server.bin)\n");
+    printf("   (default the working directory filename: ns7-mb.bin)\n");
     printf("\n");
     printf("   -p --port      port num   Listen port for server\n");
     printf("   (default port number: 32000)\n");
@@ -174,9 +175,10 @@ void usage()
     printf("   -l --log_file  filename   Write logs to the file\n");
     printf("   (default '/var/log/' filename: ns7-log.log)\n");
     printf("\n");
-    printf("   -m --microblaze value     Enable or disable GPIO reset.\n");
+    printf("   -m --microblaze value     Enable or disable GPIO reset\n");
     printf("   (set value enable or disable)\n");
-    printf("");
+    printf("\n");
+    printf("   -o --off_smooth           Turn off smooting algoritm\n");
     printf("\n");
 }
 
@@ -201,6 +203,7 @@ int main(int argc, char** argv)
         {"daemon", no_argument, 0, 'd'},
         {"log_file", optional_argument, 0, 'l'},
         {"microblaze", required_argument, 0, 'm'},
+        {"off_smooth", no_arguments, 0, 'o'},
         {NULL, 0, 0, 0}
     };
     int value, option_index = 0;
@@ -217,20 +220,16 @@ int main(int argc, char** argv)
 
     char *my_optarg;
 
+    SMOOTHING_FLAG = 1;
+
     // Try to process all command line arguments
-    while( (value = getopt_long(argc, argv, "i::p::l::scdhm:", long_options, &option_index)) != -1) {
+    while( (value = getopt_long(argc, argv, "i::p::l::scdhm:o", long_options, &option_index)) != -1) {
         switch(value) {
         case 'h':
             usage();
             return 0;
         case 'i':
             init = 1;
-            if(optarg != NULL)
-            {
-                init_filename = strdup(optarg);
-                break;
-            }
-
             my_optarg = NULL;
             if(!optarg
                && optind < argc // make sure optind is valid
@@ -242,37 +241,33 @@ int main(int argc, char** argv)
                 my_optarg = argv[optind++];
             }
             if(my_optarg != NULL)
-            {
                 init_filename = strdup(my_optarg);
-                break;
-            }
-
-            init_filename = INIT_FILE;
+            else
+                init_filename = INIT_FILE;
             break;
         case 'p':
             if(optarg != NULL)
             {
                 port_num = atoi(optarg);
-                break;
             }
-
-            my_optarg = NULL;
-            if(!optarg
-               && optind < argc // make sure optind is valid
-               && NULL != argv[optind] // make sure it's not a null string
-               && '\0' != argv[optind][0] // ... or an empty string
-               && '-' != argv[optind][0] // ... or another option
-              )
+            else
             {
-                my_optarg = argv[optind++];
+                my_optarg = NULL;
+                if(!optarg
+                   && optind < argc // make sure optind is valid
+                   && NULL != argv[optind] // make sure it's not a null string
+                   && '\0' != argv[optind][0] // ... or an empty string
+                   && '-' != argv[optind][0] // ... or another option
+                  )
+                {
+                    my_optarg = argv[optind++];
+                }
+                if(my_optarg != NULL)
+                    port_num = atoi(my_optarg);
+                else
+                    port_num = PORT;
             }
-            if(my_optarg != NULL)
-            {
-                port_num = atoi(my_optarg);
-                break;
-            }
-
-            port_num = PORT;
+            printf("port - %d ---- %s\n", port_num, optarg);
             break;
         case 's':
             start_srv= 1;
@@ -284,12 +279,6 @@ int main(int argc, char** argv)
             daemonized = 1;
             break;
         case 'l':
-            if(optarg != NULL)
-            {
-                log_filename = strdup(optarg);
-                break;
-            }
-
             my_optarg = NULL;
             if(!optarg
                && optind < argc // make sure optind is valid
@@ -302,7 +291,7 @@ int main(int argc, char** argv)
             }
             if(my_optarg != NULL)
                 log_filename = strdup(my_optarg);
-            break;
+            return 0;
         case 'm':
             if(optarg != NULL)
             {
@@ -321,6 +310,9 @@ int main(int argc, char** argv)
             }
             usage();
             return -1;
+        case 'o':
+            SMOOTHING_FLAG = 0;
+            break;
         case '?':
             usage();
             return 0;
@@ -332,7 +324,13 @@ int main(int argc, char** argv)
     if(init)
     {
         printf("Try to initialize microblaze...\n");
-        printf("file: %s\n", init_filename);
+        // Set cos array
+        if (set_cos_array() == -1)
+        {
+            printf("set_cos_array: error set cos array\n");
+            return -1;
+        }
+        printf("Load cos array... ok!\n");\
 
         // Load bin file to the memmory
         if (file_loader(init_filename) == -1)
@@ -465,4 +463,3 @@ int main(int argc, char** argv)
 
     return 0;
 }
-
