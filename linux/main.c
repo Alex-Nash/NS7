@@ -230,6 +230,12 @@ int main(int argc, char** argv)
             return 0;
         case 'i':
             init = 1;
+            if(optarg != NULL)
+            {
+                init_filename = strdup(optarg);
+                break;
+            }
+
             my_optarg = NULL;
             if(!optarg
                && optind < argc // make sure optind is valid
@@ -241,33 +247,38 @@ int main(int argc, char** argv)
                 my_optarg = argv[optind++];
             }
             if(my_optarg != NULL)
+            {
                 init_filename = strdup(my_optarg);
-            else
-                init_filename = INIT_FILE;
+                break;
+            }
+
+            init_filename = INIT_FILE;
             break;
         case 'p':
             if(optarg != NULL)
             {
                 port_num = atoi(optarg);
+                break;
             }
-            else
+
+            my_optarg = NULL;
+            if(!optarg
+               && optind < argc // make sure optind is valid
+               && NULL != argv[optind] // make sure it's not a null string
+               && '\0' != argv[optind][0] // ... or an empty string
+               && '-' != argv[optind][0] // ... or another option
+              )
             {
-                my_optarg = NULL;
-                if(!optarg
-                   && optind < argc // make sure optind is valid
-                   && NULL != argv[optind] // make sure it's not a null string
-                   && '\0' != argv[optind][0] // ... or an empty string
-                   && '-' != argv[optind][0] // ... or another option
-                  )
-                {
-                    my_optarg = argv[optind++];
-                }
-                if(my_optarg != NULL)
-                    port_num = atoi(my_optarg);
-                else
-                    port_num = PORT;
+                my_optarg = argv[optind++];
             }
-            printf("port - %d ---- %s\n", port_num, optarg);
+
+            if(my_optarg != NULL)
+            {
+                port_num = atoi(my_optarg);
+                break;
+            }
+
+            port_num = PORT;
             break;
         case 's':
             start_srv= 1;
@@ -279,6 +290,11 @@ int main(int argc, char** argv)
             daemonized = 1;
             break;
         case 'l':
+            if(optarg != NULL)
+            {
+                log_filename = strdup(optarg);
+                break;
+            }
             my_optarg = NULL;
             if(!optarg
                && optind < argc // make sure optind is valid
@@ -291,7 +307,7 @@ int main(int argc, char** argv)
             }
             if(my_optarg != NULL)
                 log_filename = strdup(my_optarg);
-            return 0;
+            break;
         case 'm':
             if(optarg != NULL)
             {
@@ -323,16 +339,16 @@ int main(int argc, char** argv)
 
     if(init)
     {
-        printf("Try to initialize microblaze...\n");
-        // Set cos array
-        if (set_cos_array() == -1)
+        printf("Try to disable GPIO reset...\n");
+        if(mb_stop() == -1)
         {
-            printf("set_cos_array: error set cos array\n");
+            printf("reset: error enable GPIO\n");
             return -1;
         }
-        printf("Load cos array... ok!\n");\
+        printf("Microblaze GPIO reset DISABLE!\n");
 
         // Load bin file to the memmory
+        printf("Try to load binary file...\n");
         if (file_loader(init_filename) == -1)
         {
             printf("file_loader: error load file\n");
@@ -343,22 +359,24 @@ int main(int argc, char** argv)
 
     if(enable_mb)
     {
-        printf("Try to enable GPIO reste...\n");
+        printf("Try to enable GPIO reset...\n");
         if(mb_start() == -1)
         {
             printf("reset: error enable GPIO\n");
+            return -1;
         }
-        printf("Microblaze GPIO reste ENABLE!\n");
+        printf("Microblaze GPIO reset ENABLE!\n");
     }
 
     if(disable_mb)
     {
-        printf("Try to disable GPIO reste...\n");
+        printf("Try to disable GPIO reset...\n");
         if(mb_stop() == -1)
         {
             printf("reset: error enable GPIO\n");
+            return -1;
         }
-        printf("Microblaze GPIO reste DISABLE!\n");
+        printf("Microblaze GPIO reset DISABLE!\n");
     }
 
     if(start_srv && stop_srv)

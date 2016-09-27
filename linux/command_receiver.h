@@ -1,14 +1,6 @@
 #ifndef COMMAND_RECEIVER_H
 #define COMMAND_RECEIVER_H
 
-
-#if defined(DEBUG)
- #define DEBUG_PRINT(fmt, args...) printf("DEBUG: %d:%s(): " fmt "\n", \
-    __LINE__, __func__, ##args)
-#else
- #define DEBUG_PRINT(fmt, args...)
-#endif
-
 #define CMDSIZE     12 // number of bytes for commands
 
 int sockfd;
