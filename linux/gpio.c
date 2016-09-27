@@ -67,7 +67,7 @@ int set_gpio_to_hi(uint16_t gpio_pin)
   int status, gpio_val;
   char gpio_str[4];
 
-  slog(gpio_str, "%d", gpio_pin);
+  sprintf(gpio_str, "%d", gpio_pin);
 
   status = init_gpio(gpio_pin);
   if (status < 0)
@@ -94,7 +94,7 @@ int set_gpio_to_low(uint16_t gpio_pin)
   int status, gpio_val;
   char gpio_str[4];
 
-  slog(gpio_str, "%d", gpio_pin);
+  sprintf(gpio_str, "%d", gpio_pin);
 
   status = init_gpio(gpio_pin);
   if (status < 0)
@@ -121,7 +121,7 @@ int init_gpio (uint16_t gpio_pin)
   int gpio_exp, gpio_direction;
   char gpio_str[4];
 
-  slog(gpio_str, "%d", gpio_pin);
+  sprintf(gpio_str, "%d", gpio_pin);
 
   gpio_exp = open("/sys/class/gpio/export", O_WRONLY);
   if (gpio_exp < 0)
@@ -153,7 +153,7 @@ int close_gpio (uint16_t gpio_pin)
   int gpio_unexp;
   char gpio_str[4];
 
-  slog(gpio_str, "%d", gpio_pin);
+  sprintf(gpio_str, "%d", gpio_pin);
 
   gpio_unexp = open("/sys/class/gpio/unexport", O_WRONLY);
   if (gpio_unexp < 0)

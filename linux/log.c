@@ -4,7 +4,7 @@
 #include <sys/file.h>
 #include <string.h>
 
-#define LOG_FILE "/var/log/ns7_daemon.log"
+#define LOG_FILE "/var/log/ns7.log"
 
 #include "log.h"
 

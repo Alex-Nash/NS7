@@ -5,9 +5,10 @@ SET(CMAKE_SYSTEM_NAME Linux)
 #this one not so much
 SET(CMAKE_SYSTEM_VERSION 1)
 
-SET(DCMAKE_CXX_FLAGS m32)
-SET(DCMAKE_SHARED_LINKER_FLAGS m32)
-SET(DCMAKE_STATIC_LINKER_FLAGS m32)
+set(CMAKE_SYSTEM_PROCESSOR "i686")
+
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -m32" CACHE STRING "c++ flags")
+set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS} -m32" CACHE STRING "c flags")
 
 # specify the cross compiler
 SET(CMAKE_C_COMPILER   /usr/bin/arm-linux-gnueabi-gcc)

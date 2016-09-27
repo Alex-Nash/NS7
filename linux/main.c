@@ -16,7 +16,7 @@
 #include "gpio.h"
 
 #define PID_FILE    "/var/run/ns7_daemon.pid"
-#define INIT_FILE   "ns7_mb.bin"
+#define INIT_FILE   "mb_server.bin"
 #define PORT        32000;
 
 static char *app_name = NULL;
@@ -173,7 +173,7 @@ void usage()
     printf("   -d --daemon               Daemonize server\n");
     printf("\n");
     printf("   -l --log_file  filename   Write logs to the file\n");
-    printf("   (default '/var/log/' filename: ns7-log.log)\n");
+    printf("   (default '/var/log/' filename: ns7.log)\n");
     printf("\n");
     printf("   -m --microblaze value     Enable or disable GPIO reset\n");
     printf("   (set value enable or disable)\n");
@@ -203,9 +203,10 @@ int main(int argc, char** argv)
         {"daemon", no_argument, 0, 'd'},
         {"log_file", optional_argument, 0, 'l'},
         {"microblaze", required_argument, 0, 'm'},
-        {"off_smooth", no_arguments, 0, 'o'},
+        {"off_smooth", no_argument, 0, 'o'},
         {NULL, 0, 0, 0}
     };
+
     int value, option_index = 0;
 
     int init = 0;
