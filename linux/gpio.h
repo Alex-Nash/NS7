@@ -9,13 +9,13 @@ int mb_start();
 
 int mb_stop();
 
-int set_gpio_to_hi(uint8_t gpio_pin);
+int set_gpio_to_hi(uint16_t gpio_pin);
 
-int set_gpio_to_low(uint8_t gpio_pin);
+int set_gpio_to_low(uint16_t gpio_pin);
 
-int init_gpio (uint8_t gpio_pin);
+int init_gpio (uint16_t gpio_pin);
 
-int close_gpio (uint8_t gpio_pin);
+int close_gpio (uint16_t gpio_pin);
 
 
 #endif
