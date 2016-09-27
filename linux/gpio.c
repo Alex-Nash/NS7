@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "gpio.h"
+#include "log.h"
 
 int mb_start()
 {
@@ -11,21 +12,21 @@ int mb_start()
   status = init_gpio(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    printf("Failed to MB GPIO reset enable\n");
+    log("Failed to MB GPIO reset enable\n");
     return -1;
   }
 
   status = set_gpio_to_hi(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    printf("Failed to MB GPIO reset enable\n");
+    log("Failed to MB GPIO reset enable\n");
     return -1;
   }
 
   status = close_gpio(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    printf("Failed to MB GPIO reset enable\n");
+    log("Failed to MB GPIO reset enable\n");
     return -1;
   }
 
@@ -38,21 +39,21 @@ int mb_stop()
   status = init_gpio(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    printf("Failed to MB GPIO reset disable\n");
+    log("Failed to MB GPIO reset disable\n");
     return -1;
   }
 
   status = set_gpio_to_low(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    printf("Failed to MB GPIO reset disable\n");
+    log("Failed to MB GPIO reset disable\n");
     return -1;
   }
 
   status = close_gpio(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    printf("Failed to MB GPIO reset enable\n");
+    log("Failed to MB GPIO reset enable\n");
     return -1;
   }
 
@@ -66,7 +67,7 @@ int set_gpio_to_hi(uint16_t gpio_pin)
   int status, gpio_val;
   char gpio_str[4];
 
-  sprintf(gpio_str, "%d", gpio_pin);
+  slog(gpio_str, "%d", gpio_pin);
 
   status = init_gpio(gpio_pin);
   if (status < 0)
@@ -79,7 +80,7 @@ int set_gpio_to_hi(uint16_t gpio_pin)
   gpio_val = open(set_value_str, O_WRONLY);
   if (gpio_val < 0)
   {
-    printf("Failed to open GPIO\n");
+    log("Failed to open GPIO\n");
     return -1;
   }
   write(gpio_val, "1", 1);
@@ -93,7 +94,7 @@ int set_gpio_to_low(uint16_t gpio_pin)
   int status, gpio_val;
   char gpio_str[4];
 
-  sprintf(gpio_str, "%d", gpio_pin);
+  slog(gpio_str, "%d", gpio_pin);
 
   status = init_gpio(gpio_pin);
   if (status < 0)
@@ -106,7 +107,7 @@ int set_gpio_to_low(uint16_t gpio_pin)
   gpio_val = open(set_value_str, O_WRONLY);
   if (gpio_val < 0)
   {
-    printf("Failed to open GPIO\n");
+    log("Failed to open GPIO\n");
     return -1;
   }
   write(gpio_val, "0", 1);
@@ -120,12 +121,12 @@ int init_gpio (uint16_t gpio_pin)
   int gpio_exp, gpio_direction;
   char gpio_str[4];
 
-  sprintf(gpio_str, "%d", gpio_pin);
+  slog(gpio_str, "%d", gpio_pin);
 
   gpio_exp = open("/sys/class/gpio/export", O_WRONLY);
   if (gpio_exp < 0)
   {
-    printf("Failed to open GPIO to export\n");
+    log("Failed to open GPIO to export\n");
     return -1;
   }
   write(gpio_exp, gpio_str, strlen(gpio_str));
@@ -138,7 +139,7 @@ int init_gpio (uint16_t gpio_pin)
   gpio_direction = open(direction_str, O_WRONLY);
   if (gpio_direction < 0)
   {
-    printf("Failed to open GPIO\n");
+    log("Failed to open GPIO\n");
     return -1;
   }
   write(gpio_direction, "out", 3);
@@ -152,12 +153,12 @@ int close_gpio (uint16_t gpio_pin)
   int gpio_unexp;
   char gpio_str[4];
 
-  sprintf(gpio_str, "%d", gpio_pin);
+  slog(gpio_str, "%d", gpio_pin);
 
   gpio_unexp = open("/sys/class/gpio/unexport", O_WRONLY);
   if (gpio_unexp < 0)
   {
-    printf("Failed to open GPIO to unexport\n");
+    log("Failed to open GPIO to unexport\n");
     return -1;
   }
   write(gpio_unexp, gpio_str, strlen(gpio_str));
