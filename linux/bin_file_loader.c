@@ -8,7 +8,7 @@
 
 #define MEM_OFFSET 0x00000000
 
-int file_loader (char *filename)
+int file_loader(char *filename)
 {
 
     int src_file;
@@ -26,20 +26,19 @@ int file_loader (char *filename)
         return -1;
     }
 
-    
-
     if((src_ptr = mmap(0, statbuf.st_size, PROT_READ, MAP_SHARED, src_file, 0)) == MAP_FAILED ) {
         printf("failed to map file to the memory\n");
         close(src_file);
         return -1;
     }
 
+    if(bram_memory_write((uint32_t) MEM_OFFSET, src_ptr, (uint32_t)(statbuf.st_size / 4)) == -1)
+    {
+        close(src_file);
+        return -1;
+    }
 
-
-
-
-    bram_memory_write((uint32_t) MEM_OFFSET, src_ptr, (uint32_t)(statbuf.st_size / 4));
-    
     close(src_file);
+
     return 0;
 }

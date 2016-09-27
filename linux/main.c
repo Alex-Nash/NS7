@@ -225,6 +225,12 @@ int main(int argc, char** argv)
             return 0;
         case 'i':
             init = 1;
+            if(optarg != NULL)
+            {
+                init_filename = strdup(optarg);
+                break;
+            }
+
             my_optarg = NULL;
             if(!optarg
                && optind < argc // make sure optind is valid
@@ -236,32 +242,37 @@ int main(int argc, char** argv)
                 my_optarg = argv[optind++];
             }
             if(my_optarg != NULL)
+            {
                 init_filename = strdup(my_optarg);
-            else
-                init_filename = INIT_FILE;
+                break;
+            }
+
+            init_filename = INIT_FILE;
             break;
         case 'p':
             if(optarg != NULL)
             {
                 port_num = atoi(optarg);
+                break;
             }
-            else
+
+            my_optarg = NULL;
+            if(!optarg
+               && optind < argc // make sure optind is valid
+               && NULL != argv[optind] // make sure it's not a null string
+               && '\0' != argv[optind][0] // ... or an empty string
+               && '-' != argv[optind][0] // ... or another option
+              )
             {
-                my_optarg = NULL;
-                if(!optarg
-                   && optind < argc // make sure optind is valid
-                   && NULL != argv[optind] // make sure it's not a null string
-                   && '\0' != argv[optind][0] // ... or an empty string
-                   && '-' != argv[optind][0] // ... or another option
-                  )
-                {
-                    my_optarg = argv[optind++];
-                }
-                if(my_optarg != NULL)
-                    port_num = atoi(my_optarg);
-                else
-                    port_num = PORT;
+                my_optarg = argv[optind++];
             }
+            if(my_optarg != NULL)
+            {
+                port_num = atoi(my_optarg);
+                break;
+            }
+
+            port_num = PORT;
             break;
         case 's':
             start_srv= 1;
@@ -321,6 +332,7 @@ int main(int argc, char** argv)
     if(init)
     {
         printf("Try to initialize microblaze...\n");
+        printf("file: %s\n", init_filename);
         // Set cos array
         /*if (set_cos_array() == -1)
         {

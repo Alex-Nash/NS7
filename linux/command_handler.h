@@ -3,7 +3,7 @@
 
 #include <inttypes.h>
 
-#define MEM_OFFSET_DASHBOARD            (0x00000FF0)
+#define MEM_OFFSET_DASHBOARD            (0x0000FF00)
 #define MEM_OFFSET_POWER                (MEM_OFFSET_DASHBOARD + 0x08)
 #define MEM_OFFSET_COMMAND_LEFT     	(MEM_OFFSET_DASHBOARD + 0x10)
 #define MEM_OFFSET_COMMAND_RIGHT     	(MEM_OFFSET_DASHBOARD + 0x20)
@@ -15,9 +15,8 @@
 #define ENG_DISABLE               0x00
 #define ENG_ENABLE                0x01
 
-#define SMOOTHING_FLAG    1    //  1 - enable smoothing 0 - disable smoothing
-#define SMOOTHING		      5
-
+#define SMOOTHING_FLAG    0    //  1 - enable smoothing 0 - disable smoothing
+#define SMOOTHING		  5
 #define MIN_DELAY         0x3F
 #define MAX_DELAY         0x1FFFE
 #define MIN_TORQ          0x7FFF
