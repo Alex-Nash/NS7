@@ -158,27 +158,27 @@ void usage()
     printf("\n");
     printf("  Options:\n");
     printf("\n");
-    printf("   -h --help                 Print this help\n");
+    printf("   -h --help                   Print this help\n");
     printf("\n");
-    printf("   -i --init      filename   Init microblaze from file\n");
+    printf("   -i --init        filename   Init microblaze from file\n");
     printf("   (default the working directory filename: ns7-mb.bin)\n");
     printf("\n");
-    printf("   -p --port      port num   Listen port for server\n");
+    printf("   -p --port        port num   Listen port for server\n");
     printf("   (default port number: 32000)\n");
     printf("\n");
-    printf("   -s --start                Start server of motor commands\n");
+    printf("   -s --start                  Start server of motor commands\n");
     printf("\n");
-    printf("   -c --stop                 Stop server\n");
+    printf("   -c --stop                   Stop server\n");
     printf("\n");
-    printf("   -d --daemon               Daemonize server\n");
+    printf("   -d --daemon                 Daemonize server\n");
     printf("\n");
-    printf("   -l --log_file  filename   Write logs to the file\n");
+    printf("   -l --log_file    filename   Write logs to the file\n");
     printf("   (default '/var/log/' filename: ns7.log)\n");
     printf("\n");
-    printf("   -m --microblaze value     Enable or disable GPIO reset\n");
+    printf("   -m --microblaze  value      Enable or disable GPIO reset\n");
     printf("   (set value enable or disable)\n");
     printf("\n");
-    printf("   -o --off_smooth           Turn off smooting algoritm\n");
+    printf("   -o --off_smooth             Turn off smooting algoritm\n");
     printf("\n");
 }
 
@@ -338,51 +338,60 @@ int main(int argc, char** argv)
         }
     }
 
+
+    // open log
+    if(open_log() == -1)
+    {
+        printf("Fail to open log: %s\n", strerror(errno));
+        return -1;
+    }
+
+
     if(init)
     {
-        printf("Try to disable GPIO reset...\n");
+        log("Try to disable GPIO reset...\n");
         if(mb_stop() == -1)
         {
-            printf("reset: error enable GPIO\n");
+            log("reset: error enable GPIO\n");
             return -1;
         }
-        printf("Microblaze GPIO reset DISABLE!\n");
+        log("Microblaze GPIO reset DISABLE!\n");
 
         // Load bin file to the memmory
-        printf("Try to load binary file...\n");
+        log("Try to load binary file...\n");
         if (file_loader(init_filename) == -1)
         {
-            printf("file_loader: error load file\n");
+            log("file_loader: error load file\n");
             return -1;
         }
-        printf("Load binary file... ok!\n");
+        log("Load binary file... ok!\n");
     }
 
     if(enable_mb)
     {
-        printf("Try to enable GPIO reset...\n");
+        log("Try to enable GPIO reset...\n");
         if(mb_start() == -1)
         {
-            printf("reset: error enable GPIO\n");
+            log("reset: error enable GPIO\n");
             return -1;
         }
-        printf("Microblaze GPIO reset ENABLE!\n");
+        log("Microblaze GPIO reset ENABLE!\n");
     }
 
     if(disable_mb)
     {
-        printf("Try to disable GPIO reset...\n");
+        log("Try to disable GPIO reset...\n");
         if(mb_stop() == -1)
         {
-            printf("reset: error enable GPIO\n");
+            log("reset: error enable GPIO\n");
             return -1;
         }
-        printf("Microblaze GPIO reset DISABLE!\n");
+        log("Microblaze GPIO reset DISABLE!\n");
     }
 
     if(start_srv && stop_srv)
     {
-        printf("Try to restart server...\n");
+        log("Try to restart server...\n");
     }
 
     int pid;
@@ -395,12 +404,12 @@ int main(int argc, char** argv)
     {
         if(pid_fd == -1)
         {
-            printf("Fail to connect to server process for stoping\n");
+            log("Fail to connect to server process for stoping\n");
         }
 
         if(read(pid_fd, buf, 256) == -1)
         {
-            printf("Fail to read pid of server\n");
+            log("Fail to read pid of server\n");
             close(pid_fd);
             unlink(PID_FILE);
         }
@@ -410,45 +419,37 @@ int main(int argc, char** argv)
 
             if(pid <= 0)
             {
-                printf("Fail: wrong pid of daemon\n");
+                log("Fail: wrong pid of daemon\n");
                 close(pid_fd);
                 unlink(PID_FILE);
             }
 
-            printf("Send stop signal to server (%u)\n", pid);
+            log("Send stop signal to server (%u)\n", pid);
 
             if(kill(pid, SIGINT) == -1)
             {
-                printf("kill: %s\n", strerror(errno));
+                log("kill: %s\n", strerror(errno));
                 unlink(PID_FILE);
             }
 
-            printf("See log for stopping status!\n");
+            log("See log for stopping status!\n");
         }
     }
 
     if(start_srv && (pid_fd != -1) && !stop_srv)
     {
-        printf("Server is already running\n");
+        log("Server is already running\n");
         return -1;
     }
 
     if(!start_srv) return 0;
 
-    printf("Try to start server...\n");
-
-
-    // open log
-    if(open_log() == -1)
-    {
-        printf("Fail to open log: %s\n", strerror(errno));
-        return -1;
-    }
+    log("Try to start server...\n");
 
     if(daemonized)
     {
-        printf("Server in demonized status!\n");
-        printf("See log file for status.\n");
+        log("Server in demonized status!\n");
+        log("See log file for status.\n");
         if(daemonize() == -1)
         {
             log("Fail to daemonize process\n");

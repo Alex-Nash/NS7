@@ -50,12 +50,12 @@ void log(const char *format, ...)
     // log time
     sprintf(log_buf, "(%s) ", time_buf);
     write(log_file, log_buf, strlen(log_buf));
-    if(!daemonized) printf(log_buf);
+    printf(log_buf);
 
     // log message
     vsprintf(log_buf, format, args);
     write(log_file, log_buf, strlen(log_buf));
-    if(!daemonized) printf(log_buf);
+    printf(log_buf);
 
     va_end(args);
 }

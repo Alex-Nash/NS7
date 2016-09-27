@@ -18,8 +18,8 @@
 #define SMOOTHING		  5
 #define MIN_DELAY         0x3F
 #define MAX_DELAY         0x1FFFE
-#define MIN_TORQ          0x7FFF
-#define MAX_TORQ          0xFFFE
+#define MIN_TORQ          0x0000
+#define MAX_TORQ          0xFFFF
 
 int SMOOTHING_FLAG;     //  1 - enable smoothing 0 - disable smoothing
 
