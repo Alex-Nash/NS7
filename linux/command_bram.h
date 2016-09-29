@@ -20,4 +20,5 @@ struct bram_rw_data {
 
 int bram_memory_write(uint32_t offset, uint32_t *data, uint32_t length);
 
+int bram_memory_read(uint32_t offset, uint32_t *data, uint32_t length);
 #endif

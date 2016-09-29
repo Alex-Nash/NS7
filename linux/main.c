@@ -2,12 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/file.h>
-#include <execinfo.h>
 #include <unistd.h>
 #include <errno.h>
 #include <wait.h>
-#include <pthread.h>
 #include <getopt.h>
+#include <sys/stat.h>
 
 #include "log.h"
 #include "command_receiver.h"
@@ -62,7 +61,6 @@ void handle_signal(int sig)
 static int daemonize()
 {
     pid_t pid = 0;
-    int fd;
 
     // Fork off the parent process
     pid = fork();

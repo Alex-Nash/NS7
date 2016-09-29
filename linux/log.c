@@ -2,6 +2,7 @@
 #include <time.h>
 #include <stdarg.h>
 #include <sys/file.h>
+#include <unistd.h>
 #include <string.h>
 
 #define LOG_FILE "/var/log/ns7.log"

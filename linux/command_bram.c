@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <inttypes.h>
-#include <linux/ioctl.h>
+//#include <linux/ioctl.h>
+#include <sys/ioctl.h>
+#include <memory.h>
 
 #include "log.h"
 #include "command_bram.h"

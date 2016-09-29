@@ -49,7 +49,6 @@ int execute_move_cmd(char *command_str)
 {
   uint32_t mem_command_left[2];
   uint32_t mem_command_right[2];
-  uint32_t  prev_left_eng_speed, prev_right_eng_speed, speed_step;
   uint32_t torq, dir;
   int status;
 
@@ -199,14 +198,14 @@ int execute_power_cmd(char *command_str)
 uint32_t speed_to_delay(int speed)
 {
   uint32_t delay;
-  uint16_t cur_speed = abs(speed);
+  uint16_t cur_speed = (uint16_t)abs(speed);
 
   if (cur_speed > 100)
     cur_speed = 100;
   if (cur_speed < 0)
     cur_speed = 0;
 
-  delay = MAX_DELAY - ((MAX_DELAY - MIN_DELAY) * cur_speed / 100.0);
+  delay = (uint32_t)(MAX_DELAY - ((MAX_DELAY - MIN_DELAY) * cur_speed / 100.0));
 
   return delay;
 }
@@ -214,13 +213,13 @@ uint32_t speed_to_delay(int speed)
 uint32_t speed_to_torq(int speed)
 {
   uint32_t torq;
-  uint16_t cur_speed = abs(speed);
+  uint16_t cur_speed = (uint16_t)abs(speed);
   if (cur_speed > 100)
     cur_speed = 100;
   if (cur_speed < 0)
     cur_speed = 0;
 
-  torq = MIN_TORQ + ((MAX_TORQ - MIN_TORQ) * cur_speed / 100.0);
+  torq = (uint32_t)(MIN_TORQ + ((MAX_TORQ - MIN_TORQ) * cur_speed / 100.0));
   if (cur_speed == 0)
     torq = 0;
 
@@ -272,16 +271,16 @@ int get_speed_value_from_ram(struct move_command *command)
   if (status < 0)
     return -1;
 
-  torq = tmp_command & 0x0000FFFF;
-  direction = tmp_command & 0xFFFF0000;
+  torq = (uint16_t)(tmp_command & 0x0000FFFF);
+  direction = (uint16_t)((tmp_command & 0xFFFF0000)>>16);
   command->left_eng_speed = torq_to_speed(torq, direction);
 
   status = bram_memory_read((uint32_t)MEM_OFFSET_COMMAND_RIGHT, &tmp_command, 1);
   if (status < 0)
     return -1;
 
-  torq = tmp_command & 0x0000FFFF;
-  direction = tmp_command & 0xFFFF0000;
+  torq = (uint16_t)(tmp_command & 0x0000FFFF);
+  direction = (uint16_t)((tmp_command & 0xFFFF0000)>>16);
   command->right_eng_speed = torq_to_speed(torq, direction);
 
   return 0;
