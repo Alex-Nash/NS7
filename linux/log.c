@@ -5,7 +5,7 @@
 #include <unistd.h>
 #include <string.h>
 
-#define LOG_FILE "/var/log/ns7.log"
+#define LOG_FILE "ns7.log"
 
 #include "log.h"
 

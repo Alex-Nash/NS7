@@ -159,7 +159,7 @@ void usage()
     printf("   -h --help                   Print this help\n");
     printf("\n");
     printf("   -i --init        filename   Init microblaze from file\n");
-    printf("   (default the working directory filename: ns7-mb.bin)\n");
+    printf("   (default the working directory filename: mb-server.bin)\n");
     printf("\n");
     printf("   -p --port        port num   Listen port for server\n");
     printf("   (default port number: 32000)\n");
@@ -171,7 +171,7 @@ void usage()
     printf("   -d --daemon                 Daemonize server\n");
     printf("\n");
     printf("   -l --log_file    filename   Write logs to the file\n");
-    printf("   (default '/var/log/' filename: ns7.log)\n");
+    printf("   (default the working directory filename: ns7.log)\n");
     printf("\n");
     printf("   -m --microblaze  value      Enable or disable GPIO reset\n");
     printf("   (set value enable or disable)\n");
@@ -208,7 +208,7 @@ int main(int argc, char** argv)
     int value, option_index = 0;
 
     int init = 0;
-    int port_num = 0;
+    int port_num = PORT;
     char *init_filename;
 
     int start_srv = 0;
