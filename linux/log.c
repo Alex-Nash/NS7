@@ -5,8 +5,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#define LOG_FILE "ns7.log"
-
 #include "log.h"
 
 int log_file;
@@ -14,14 +12,7 @@ int log_file;
 // open log file
 int open_log()
 {
-    if(log_filename == NULL)
-    {
-        log_file = open(LOG_FILE, O_RDWR | O_CREAT);
-    }
-    else
-    {
-        log_file = open(log_filename, O_RDWR | O_CREAT);
-    }
+    log_file = open(log_filename, O_RDWR | O_CREAT | O_APPEND);
 
     if(log_file == -1) return -1;
 
@@ -34,7 +25,7 @@ void close_log()
     close(log_file);
 }
 
-// log function
+// log function !!! do not use DEBUG_MSG, ERROR_MSG, USER_MSG FUNC HERE !!!
 void log(const char *format, ...)
 {
     char time_buf[64];
@@ -50,13 +41,12 @@ void log(const char *format, ...)
 
     // log time
     sprintf(log_buf, "(%s) ", time_buf);
-    write(log_file, log_buf, strlen(log_buf));
-    printf(log_buf);
+    if(log_file > 0) write(log_file, log_buf, strlen(log_buf));
 
     // log message
     vsprintf(log_buf, format, args);
-    write(log_file, log_buf, strlen(log_buf));
-    printf(log_buf);
+    if(log_file > 0) write(log_file, log_buf, strlen(log_buf));
+    if(!daemonized) printf(log_buf);
 
     va_end(args);
 }

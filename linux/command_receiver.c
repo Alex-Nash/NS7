@@ -10,6 +10,8 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 
+#define DEBUG       3
+
 #include "log.h"
 #include "command_handler.h"
 #include "command_receiver.h"
@@ -18,7 +20,7 @@
 // function to handle cmd
 int handle_command(char *cmd)
 {
-  log("CMD: %s\n", cmd);
+  DEBUG_MSG("CMD: \"%s\"", cmd);
   execute_command(cmd);
   return 0;
 }
@@ -37,12 +39,12 @@ int init_command_socket(int port)
     int yes = 1;
 
     if((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-        log("socket: %s\n", strerror(errno));
+        ERROR_MSG("socket: fail (%s)", strerror(errno));
         return -1;
     }
 
     if(setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1) {
-        log("setsockopt: %s\n", strerror(errno));
+        ERROR_MSG("setsockopt: fail (%s)", strerror(errno));
         return -1;
     }
 
@@ -52,12 +54,12 @@ int init_command_socket(int port)
     memset(&(my_addr.sin_zero), '\0', 8); // zero the rest of the struct
 
     if(bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {
-        log("bind: %s\n", strerror(errno));
+        ERROR_MSG("bind: fail (%s)", strerror(errno));
         return -1;
     }
 
     if(listen(sockfd, SOMAXCONN) == -1) {
-        log("listen: %s\n", strerror(errno));
+        ERROR_MSG("listen: fail (%s)", strerror(errno));
         return -1;
     }
 
@@ -66,7 +68,7 @@ int init_command_socket(int port)
     sa.sa_flags = SA_RESTART;
 
     if(sigaction(SIGCHLD, &sa, NULL) == -1) {
-        log("sigaction: %s\n", strerror(errno));
+        ERROR_MSG("sigaction: fail (%s)", strerror(errno));
         return -1;
     }
 
@@ -77,15 +79,16 @@ int init_command_socket(int port)
         struct sockaddr_in their_addr; // connector's address information
         int sin_size;
 
-        log("Wait for connection...\n");
+        USER_MSG("wait for connection...");
 
         sin_size = sizeof(struct sockaddr_in);
-        if((clientfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)) == -1) {
-            log("accept: s\n", strerror(errno));
+        if((clientfd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size)) == -1)
+        {
+            ERROR_MSG("accept: fail (%s)", strerror(errno));
             continue;
         }
 
-        log("server: got connection from %s\n", inet_ntoa(their_addr.sin_addr));
+        USER_MSG("server: got connection (%s)", inet_ntoa(their_addr.sin_addr));
 
         int numbytes;
         char cmd[CMDSIZE];
@@ -94,19 +97,19 @@ int init_command_socket(int port)
         {
             if((numbytes = recv(clientfd, cmd, CMDSIZE, 0)) == -1)
             {
-                log("recv: %s\n", strerror(errno));
+                ERROR_MSG("recv: fail (%s)", strerror(errno));
                 break;
             }
 
             if(numbytes == 0)
             {
-                log("connection lost\n");
+                USER_MSG("connection: lost");
                 break;
             }
 
             if(handle_command(cmd) == -1)
             {
-                log("handle_command: bad command\n");
+                ERROR_MSG("handle_command: fail (unknown command)");
                 break;
             }
 

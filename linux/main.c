@@ -8,6 +8,8 @@
 #include <getopt.h>
 #include <sys/stat.h>
 
+#define DEBUG       3
+
 #include "log.h"
 #include "command_receiver.h"
 #include "command_handler.h"
@@ -16,6 +18,7 @@
 
 #define PID_FILE    "/var/run/ns7_daemon.pid"
 #define INIT_FILE   "mb_server.bin"
+#define LOG_FILE    "ns7.log"
 #define PORT        32000;
 
 static char *app_name = NULL;
@@ -31,7 +34,7 @@ void handle_signal(int sig)
 {
     if(sig == SIGINT)
     {
-        log("Stopping daemon ...\n");
+        DEBUG_MSG("stop signal: received");
         // Unlock and close lockfile
         if(pid_fd != -1)
         {
@@ -51,7 +54,7 @@ void handle_signal(int sig)
     }
     else if(sig == SIGCHLD)
     {
-        log( "Received SIGCHLD signal\n");
+        DEBUG_MSG("SIGCHLD signal: received");
     }
 }
 
@@ -68,20 +71,21 @@ static int daemonize()
     // An error occurred
     if(pid == -1)
     {
-        log("Fail to fork process: %s\n", strerror(errno));
+        ERROR_MSG("process (%d): fail to fork (%s)", getpid(), strerror(errno));
         return -1;
     }
 
     // Success: Let the parent terminate
     if(pid > 0)
     {
+        DEBUG_MSG("process (%d): exit", getpid());
         exit(0);
     }
 
     // On success: The child process becomes session leader
     if(setsid() == -1)
     {
-        log("Fail to create new session: %s\n", strerror(errno));
+        ERROR_MSG("new session: fail to create (%s)", strerror(errno));
         return -1;
     }
 
@@ -94,13 +98,14 @@ static int daemonize()
     // An error occurred
     if(pid == -1)
     {
-        log("Fail to fork process for the second time: %s\n", strerror(errno));
+        ERROR_MSG("process (%d): fail to fork (%s)", getpid(), strerror(errno));
         return -1;
     }
 
     // Let the parent terminate
     if(pid > 0)
     {
+        DEBUG_MSG("process (%d): exit", getpid());
         exit(0);
     }
 
@@ -111,7 +116,7 @@ static int daemonize()
      or another appropriated directory */
     if(chdir("/") == -1)
     {
-        log("Fail to change working dir: %s\n", strerror(errno));
+        ERROR_MSG("working dir: fail to change (%s)", strerror(errno));
         return -1;
     }
 
@@ -127,25 +132,27 @@ static int daemonize()
     stderr = fopen("/dev/null", "w+");*/
 
     // Try to write PID of daemon to lockfile
+    DEBUG_MSG("PID of process: save");
     char str[256];
 
     pid_fd = open(PID_FILE, O_RDWR|O_CREAT, 0640);
     if(pid_fd == -1)
     {
         // Can't open lockfile
-        log("Fail to open pid file: %s\n", strerror(errno));
+        ERROR_MSG("PID file (%s): fail to open (%s)", PID_FILE, strerror(errno));
         return -1;
     }
     if(lockf(pid_fd, F_TLOCK, 0) < 0)
     {
         // Can't lock file
-        log("Fail to lock pid file: %s\n", strerror(errno));
+        ERROR_MSG("PID file: fail to lock (%s)", strerror(errno));
         return -1;
     }
     // Get current PID
     sprintf(str, "%d\n", getpid());
     // Write PID to lockfile
     write(pid_fd, str, strlen(str));
+    DEBUG_MSG("PID of deamon (%d): saved", getpid());
 
     return 0;
 }
@@ -210,6 +217,8 @@ int main(int argc, char** argv)
     int init = 0;
     int port_num = PORT;
     char *init_filename;
+    log_filename = strdup(LOG_FILE);
+
 
     int start_srv = 0;
     int stop_srv = 0;
@@ -338,58 +347,60 @@ int main(int argc, char** argv)
 
 
     // open log
+    DEBUG_MSG("log file (%s): open", log_filename);
     if(open_log() == -1)
     {
-        printf("Fail to open log: %s\n", strerror(errno));
+        ERROR_MSG("log file (%s): fail to open (%s)", log_filename, strerror(errno));
         return -1;
     }
+    DEBUG_MSG("log file (%s): opened", log_filename);
 
 
     if(init)
     {
-        log("Try to disable GPIO reset...\n");
+        DEBUG_MSG("GPIO reset: disable");
         if(mb_stop() == -1)
         {
-            log("reset: error enable GPIO\n");
+            ERROR_MSG("GPIO reset: fail to disable");
             return -1;
         }
-        log("Microblaze GPIO reset DISABLE!\n");
+        DEBUG_MSG("GPIO reset: disabled");
 
         // Load bin file to the memmory
-        log("Try to load binary file...\n");
+        DEBUG_MSG("binary file (%s): load", init_filename);
         if (file_loader(init_filename) == -1)
         {
-            log("file_loader: error load file\n");
+            ERROR_MSG("binary file (%s): fail to load", init_filename);
             return -1;
         }
-        log("Load binary file... ok!\n");
+        DEBUG_MSG("binary file (%s): loaded", init_filename);
     }
 
     if(enable_mb)
     {
-        log("Try to enable GPIO reset...\n");
+        DEBUG_MSG("GPIO reset: enable");
         if(mb_start() == -1)
         {
-            log("reset: error enable GPIO\n");
+            ERROR_MSG("GPIO reset: fail to enable");
             return -1;
         }
-        log("Microblaze GPIO reset ENABLE!\n");
+        DEBUG_MSG("GPIO reset: enabled");
     }
 
     if(disable_mb)
     {
-        log("Try to disable GPIO reset...\n");
+        DEBUG_MSG("GPIO reset: disable");
         if(mb_stop() == -1)
         {
-            log("reset: error enable GPIO\n");
+            ERROR_MSG("GPIO reset: fail to disable");
             return -1;
         }
-        log("Microblaze GPIO reset DISABLE!\n");
+        DEBUG_MSG("GPIO reset: disabled");
     }
 
     if(start_srv && stop_srv)
     {
-        log("Try to restart server...\n");
+        USER_MSG("server: restart");
     }
 
     int pid;
@@ -397,75 +408,76 @@ int main(int argc, char** argv)
 
     pid_fd = open(PID_FILE, O_RDONLY);
 
-    // stop daemon server
+    // stop server
     if(stop_srv)
     {
+        DEBUG_MSG("server: stop");
         if(pid_fd == -1)
         {
-            log("Fail to connect to server process for stoping\n");
-        }
-
-        if(read(pid_fd, buf, 256) == -1)
-        {
-            log("Fail to read pid of server\n");
-            close(pid_fd);
-            unlink(PID_FILE);
+            ERROR_MSG("server PID: fail to open");
         }
         else
         {
-            pid = atoi(buf);
-
-            if(pid <= 0)
+            if(read(pid_fd, buf, 256) == -1)
             {
-                log("Fail: wrong pid of daemon\n");
+                ERROR_MSG("server PID: fail to read");
                 close(pid_fd);
                 unlink(PID_FILE);
             }
-
-            log("Send stop signal to server (%u)\n", pid);
-
-            if(kill(pid, SIGINT) == -1)
+            else
             {
-                log("kill: %s\n", strerror(errno));
-                unlink(PID_FILE);
-            }
+                pid = atoi(buf);
 
-            log("See log for stopping status!\n");
+                if(pid <= 0)
+                {
+                    ERROR_MSG("server PID: fail to check\n");
+                    close(pid_fd);
+                    unlink(PID_FILE);
+                }
+
+                DEBUG_MSG("stop signal (%u): send", pid);
+
+                if(kill(pid, SIGINT) == -1)
+                {
+                    ERROR_MSG("stop signal: fail to send (%s)", strerror(errno));
+                    unlink(PID_FILE);
+                }
+
+            }
         }
     }
 
     if(start_srv && (pid_fd != -1) && !stop_srv)
     {
-        log("Server is already running\n");
+        ERROR_MSG("server error: already running");
         return -1;
     }
 
     if(!start_srv) return 0;
 
-    log("Try to start server...\n");
+    DEBUG_MSG("server: start");
 
     if(daemonized)
     {
-        log("Server in demonized status!\n");
-        log("See log file for status.\n");
+        DEBUG_MSG("process: daemonize");
+
         if(daemonize() == -1)
         {
-            log("Fail to daemonize process\n");
+            ERROR_MSG("process: fail to daemonize");
             return -1;
         }
 
-        log("Daemonize process... ok!\n");
+        DEBUG_MSG("process: daemonized");
 
         // Daemon will handle signals
         signal(SIGINT, handle_signal);
     }
 
-    log("Starting...\n");
-
     running = 1;
 
     if(init_command_socket(port_num) == -1)
     {
+        DEBUG_MSG("server: closed");
         if(pid_fd != -1)
         {
             lockf(pid_fd, F_ULOCK, 0);
@@ -475,7 +487,7 @@ int main(int argc, char** argv)
         if(daemonized) unlink(PID_FILE);
     }
 
-    log("Stop\n");
+    DEBUG_MSG("programm: end");
 
     close_log();
 

@@ -1,6 +1,8 @@
 #ifndef LOG_H
 #define LOG_H
 
+#include "debug.h"
+
 char *log_filename;
 int daemonized;
 

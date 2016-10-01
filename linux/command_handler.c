@@ -3,6 +3,8 @@
 #include <string.h>
 #include <inttypes.h>
 
+#define DEBUG       3
+
 #include "log.h"
 #include "command_bram.h"
 #include "command_handler.h"
@@ -32,7 +34,7 @@ int execute_command (char *command_str)
       execute_move_cmd(move_cmd_str);
       break;
     default:
-      log ("execute_command: Wrong command!\n");
+      ERROR_MSG("execute command: wrong command");
       return -1;
   }
 
@@ -56,9 +58,9 @@ int execute_move_cmd(char *command_str)
 
   // parse move command
   status = parse_move_command(command_str, &cur_command);
-  if (status == -1)
+  if(status == -1)
   {
-    log("execute_move_cmd: Error parse move command! \n");
+    ERROR_MSG("move command: fail to parse");
     return -1;
   }
 
@@ -68,7 +70,7 @@ int execute_move_cmd(char *command_str)
     status = smoothing_move_command( &cur_command);
     if (status == -1)
     {
-      log("execute_move_cmd: Error smoothing! \n");
+      ERROR_MSG("move command: fail smoothing");
       return -1;
     }
   }
@@ -90,7 +92,7 @@ int execute_move_cmd(char *command_str)
   status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_LEFT , mem_command_left, 2);
   if ( status == -1)
   {
-    log("execute_move_cmd: Error sending command\n");
+    ERROR_MSG("move command: fail to write");
     return -1;
   }
 
@@ -109,7 +111,7 @@ int execute_move_cmd(char *command_str)
   status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_RIGHT , mem_command_right, 2);
   if ( status == -1)
   {
-    log("execute_move_cmd: Error sending command\n");
+    ERROR_MSG("move command: fail to write");
     return -1;
   }
 
@@ -179,7 +181,7 @@ int execute_power_cmd(char *command_str)
   }
   else
   {
-    log("execute_power_cmd: Error parse power command! \n");
+    ERROR_MSG("power command: fail to parse");
     return -1;
   }
 
@@ -188,7 +190,7 @@ int execute_power_cmd(char *command_str)
   status = bram_memory_write((uint32_t)MEM_OFFSET_POWER , &mem_command, 1);
   if ( status == -1)
   {
-    log("Error sending command\n");
+    ERROR_MSG("power command: fail to write");
     return -1;
   }
 
