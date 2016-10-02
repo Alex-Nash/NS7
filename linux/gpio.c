@@ -3,8 +3,11 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "gpio.h"
+#define DEBUG       3
+
 #include "log.h"
+#include "gpio.h"
+
 
 /*
  * Enable microblaze processing system
@@ -17,21 +20,21 @@ int mb_start()
   status = init_gpio(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    log("mb_start: Failed to MB GPIO init\n");
+    ERROR_MSG("mb_start: fail to init GPIO");
     return -1;
   }
 
   status = set_gpio_to_hi(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    log("mb_start: Failed to MB GPIO set value 1\n");
+    ERROR_MSG("mb_start: fail to set value 1");
     return -1;
   }
 
   status = close_gpio(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    log("mb_start: Failed to MB GPIO close device\n");
+    ERROR_MSG("mb_start: fail to close GPIO close");
     return -1;
   }
 
@@ -49,21 +52,21 @@ int mb_stop()
   status = init_gpio(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    log("mb_stop: Failed to MB GPIO init\n");
+    ERROR_MSG("mb_start: fail to init GPIO");
     return -1;
   }
 
   status = set_gpio_to_low(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    log("mb_stop: Failed to MB GPIO set value 0\n");
+    ERROR_MSG("mb_start: fail to set value 0");
     return -1;
   }
 
   status = close_gpio(GPIO_MB_RESET_PIN);
   if (status  < 0)
   {
-    log("mb_stop: Failed to MB GPIO close device\n");
+    ERROR_MSG("mb_start: fail to close GPIO close");
     return -1;
   }
   return 0;
@@ -93,7 +96,7 @@ int set_gpio_to_hi(uint16_t gpio_pin)
   gpio_val = open(set_value_str, O_WRONLY);
   if (gpio_val < 0)
   {
-    log("Failed to open GPIO\n");
+    ERROR_MSG("gpio to hi: fail to open GPIO");
     return -1;
   }
     // set GPIO device value 1
@@ -122,7 +125,7 @@ int set_gpio_to_low(uint16_t gpio_pin)
   gpio_val = open(set_value_str, O_WRONLY);
   if (gpio_val < 0)
   {
-    log("Failed to open GPIO\n");
+    ERROR_MSG("gpio to hi: fail to open GPIO");
     return -1;
   }
   write(gpio_val, "0", 1);
@@ -141,7 +144,7 @@ int init_gpio (uint16_t gpio_pin)
   gpio_exp = open("/sys/class/gpio/export", O_WRONLY);
   if (gpio_exp < 0)
   {
-    log("Failed to open GPIO to export\n");
+    ERROR_MSG("GPIO export: fail to open");
     return -1;
   }
   write(gpio_exp, gpio_str, strlen(gpio_str));
@@ -154,7 +157,7 @@ int init_gpio (uint16_t gpio_pin)
   gpio_direction = open(direction_str, O_WRONLY);
   if (gpio_direction < 0)
   {
-    log("Failed to open GPIO\n");
+    ERROR_MSG("GPIO direction: fail to open");
     return -1;
   }
   write(gpio_direction, "out", 3);
@@ -173,7 +176,7 @@ int close_gpio (uint16_t gpio_pin)
   gpio_unexp = open("/sys/class/gpio/unexport", O_WRONLY);
   if (gpio_unexp < 0)
   {
-    log("Failed to open GPIO to unexport\n");
+    ERROR_MSG("GPIO unexport: fail to open");
     return -1;
   }
   write(gpio_unexp, gpio_str, strlen(gpio_str));
