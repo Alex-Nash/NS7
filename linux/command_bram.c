@@ -24,10 +24,10 @@ int bram_memory_write(uint32_t offset, uint32_t *data, uint32_t length)
     struct bram_rw_data rw_data;
 
     rw_data.size = length;
-    rw_data.offset = (offset/4);
+    rw_data.offset = (offset/4); // convert offset from 8 bit to 32 bit
     rw_data.data = data;
     if(ioctl(mem_file, AXI_BRAM_WRITE, &rw_data)) {
-        log("AxiBram: error writting data\n");
+        log("AxiBram: error writing data\n");
         close(mem_file);
         return -1;
     }
@@ -50,11 +50,11 @@ int bram_memory_read(uint32_t offset, uint32_t *data, uint32_t length)
     struct bram_rw_data rw_data;
 
     rw_data.size = length;
-    rw_data.offset = (offset >> 2);
+    rw_data.offset = (offset >> 2); // convert offset from 8 bit to 32 bit
     rw_data.data = malloc(length * BYTE_IN_CELL);
 
     if(ioctl(mem_file, AXI_BRAM_READ, &rw_data)) {
-        log("AxiBram: error writting data\n");
+        log("AxiBram: error writing data\n");
         close(mem_file);
         return -1;
     }

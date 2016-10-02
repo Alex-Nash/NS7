@@ -237,6 +237,8 @@ int torq_to_speed(uint32_t torq, uint16_t direction)
     torq = MIN_TORQ;
 
   speed = (torq - MIN_TORQ) * 100 / (MAX_TORQ - MIN_TORQ);
+  if(speed > 100)
+    speed = 100;
   if (direction == ENG_DIRECTION_REVERSE)
     return -speed;
   return speed;
@@ -253,10 +255,15 @@ int speed_smoothing (int cur_speed_value, int prev_speed_value)
   if(step > SMOOTHING)
   {
     if (cur_speed_value > prev_speed_value)
-      return prev_speed_value + SMOOTHING;
+      cur_speed_value = prev_speed_value + SMOOTHING;
     else
-      return prev_speed_value - SMOOTHING;
+      cur_speed_value = prev_speed_value - SMOOTHING;
   }
+
+  if (cur_speed_value > 100)
+    cur_speed_value = 100;
+  if (cur_speed_value < -100)
+    cur_speed_value = -100;
 
   return cur_speed_value;
 }
