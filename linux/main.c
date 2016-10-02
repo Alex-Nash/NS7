@@ -131,6 +131,10 @@ static int daemonize()
     stdout = fopen("/dev/null", "w+");
     stderr = fopen("/dev/null", "w+");*/
 
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+
     // Try to write PID of daemon to lockfile
     DEBUG_MSG("PID of process: save");
     char str[256];
@@ -353,7 +357,6 @@ int main(int argc, char** argv)
         ERROR_MSG("log file (%s): fail to open (%s)", log_filename, strerror(errno));
         return -1;
     }
-    DEBUG_MSG("log file (%s): opened", log_filename);
 
 
     if(init)
@@ -466,8 +469,6 @@ int main(int argc, char** argv)
             ERROR_MSG("process: fail to daemonize");
             return -1;
         }
-
-        DEBUG_MSG("process: daemonized");
 
         // Daemon will handle signals
         signal(SIGINT, handle_signal);
