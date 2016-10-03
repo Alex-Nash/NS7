@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <inttypes.h>
-//#include <linux/ioctl.h>
 #include <sys/ioctl.h>
 #include <memory.h>
 
@@ -55,7 +54,7 @@ int bram_memory_read(uint32_t offset, uint32_t *data, uint32_t length)
     struct bram_rw_data rw_data;
 
     rw_data.size = length;
-    rw_data.offset = (offset >> 2); // convert offset from 8 bit to 32 bit
+    rw_data.offset = (offset/4); // convert offset from 8 bit to 32 bit
     rw_data.data = malloc(length * BYTE_IN_CELL);
 
     if(ioctl(mem_file, AXI_BRAM_READ, &rw_data))
@@ -65,7 +64,7 @@ int bram_memory_read(uint32_t offset, uint32_t *data, uint32_t length)
         return -1;
     }
 
-    memcpy(data, rw_data.data, length);
+    memcpy(data, rw_data.data, length * 4);
     free(rw_data.data);
     close(mem_file);
 

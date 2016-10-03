@@ -24,6 +24,8 @@
 static char *app_name = NULL;
 int pid_fd;
 
+int is_daemon;
+
 
 
 /**
@@ -64,6 +66,7 @@ void handle_signal(int sig)
 static int daemonize()
 {
     pid_t pid = 0;
+    int fd;
 
     // Fork off the parent process
     pid = fork();
@@ -92,6 +95,10 @@ static int daemonize()
     // Ignore signal sent from child to parent process
     signal(SIGCHLD, SIG_IGN);
 
+    USER_MSG("starting daemon server (PID - %d)", getpid());
+    USER_MSG("see log for status");
+    daemonized = is_daemon;
+
     // Fork off for the second time
     pid = fork();
 
@@ -108,6 +115,7 @@ static int daemonize()
         DEBUG_MSG("process (%d): exit", getpid());
         exit(0);
     }
+
 
     // Set new file permissions
     umask(0);
@@ -126,14 +134,22 @@ static int daemonize()
         close(fd);
     }*/
 
-    /* Reopen stdin (fd = 0), stdout (fd = 1), stderr (fd = 2) */
-    /*stdin = fopen("/dev/null", "r");
-    stdout = fopen("/dev/null", "w+");
-    stderr = fopen("/dev/null", "w+");*/
-
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
+
+    //Reopen stdin (fd = 0), stdout (fd = 1), stderr (fd = 2)
+    stdin = fopen("/dev/null", "r");
+    stdout = fopen("/dev/null", "w+");
+    stderr = fopen("/dev/null", "w+");
+
+    // open log
+    /* DEBUG_MSG("log file (%s): open", log_filename);
+    if(open_log() == -1)
+    {
+        ERROR_MSG("log file (%s): fail to open (%s)", log_filename, strerror(errno));
+        return -1;
+    } */
 
     // Try to write PID of daemon to lockfile
     DEBUG_MSG("PID of process: save");
@@ -156,7 +172,7 @@ static int daemonize()
     sprintf(str, "%d\n", getpid());
     // Write PID to lockfile
     write(pid_fd, str, strlen(str));
-    DEBUG_MSG("PID of deamon (%d): saved", getpid());
+    DEBUG_MSG("PID of daamon: %d", getpid());
 
     return 0;
 }
@@ -299,7 +315,7 @@ int main(int argc, char** argv)
             stop_srv = 1;
             break;
         case 'd':
-            daemonized = 1;
+            is_daemon = 1;
             break;
         case 'l':
             if(optarg != NULL)
@@ -460,7 +476,7 @@ int main(int argc, char** argv)
 
     DEBUG_MSG("server: start");
 
-    if(daemonized)
+    if(is_daemon)
     {
         DEBUG_MSG("process: daemonize");
 

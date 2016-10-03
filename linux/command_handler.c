@@ -67,7 +67,7 @@ int execute_move_cmd(char *command_str)
   // smoothing move command
   if (SMOOTHING_FLAG)
   {
-    status = smoothing_move_command( &cur_command);
+    status = smoothing_move_command(&cur_command);
     if (status == -1)
     {
       ERROR_MSG("move command: fail smoothing");
@@ -249,6 +249,8 @@ int torq_to_speed(uint32_t torq, uint16_t direction)
 int speed_smoothing (int cur_speed_value, int prev_speed_value)
 {
   int step;
+
+  DEBUG_MSG("cur = %d \t prev = %d", cur_speed_value, prev_speed_value);
   if (cur_speed_value > prev_speed_value)
     step = abs(cur_speed_value - prev_speed_value);
   else
@@ -266,6 +268,8 @@ int speed_smoothing (int cur_speed_value, int prev_speed_value)
     cur_speed_value = 100;
   if (cur_speed_value < -100)
     cur_speed_value = -100;
+
+  DEBUG_MSG("after smooting cur = %d" , cur_speed_value);
 
   return cur_speed_value;
 }
@@ -301,7 +305,7 @@ int smoothing_move_command (struct move_command *cur_command)
   int smoothing_speed;
   struct move_command prev_move_command;
 
-  status = get_speed_value_from_ram (&prev_move_command);
+  status = get_speed_value_from_ram(&prev_move_command);
   if (status < 0 )
     return -1;
 

@@ -27,44 +27,14 @@ static struct class*  charClass  = NULL;
 static struct device* charDevice = NULL;
 
 
-ssize_t bram_write(struct file *flip, const char *buffer, size_t length, loff_t *offset)
-{
-    u32 byte_write = 0;
-    u32 tmpbuff[AXI_BRAM_WIDTH];
-
-    if(copy_from_user((void*)axibram_pointer, buffer, length))
-        return -EINVAL;
-
-    return SUCCESS;
-}
-
-
-ssize_t bram_read(struct file *flip, char *buffer, size_t length, loff_t *offset)
-{
-    if(copy_to_user(buffer, (void*)axibram_pointer, length) )
-        return -EINVAL;
-
-    return SUCCESS;
-}
-
-
-static int bram_open(struct inode *inode, struct file *file)
-{
-    if(device_open)
-        return -EBUSY;
-
-    device_open++;
-    printk("You tried to open the %s module.\n", DEVICE_NAME);
-    try_module_get(THIS_MODULE);
-    return SUCCESS;
-}
-
-
 static int bram_close(struct inode *inode, struct file *file)
 {
     device_open--;
 
+    DEBUG_PRINT("axi bram: close %s module", DEVICE_NAME);
+
     module_put(THIS_MODULE);
+
     return SUCCESS;
 }
 
@@ -72,13 +42,15 @@ static long bram_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 {
     struct bram_rw_data data;
 
-    if (copy_from_user(&data, (struct bram_rw_data*)arg, sizeof(struct bram_rw_data))) {
-        DEBUG_PRINT("ioctl error getting arg\n");
+    if (copy_from_user(&data, (struct bram_rw_data*)arg, sizeof(struct bram_rw_data)))
+    {
+        DEBUG_PRINT("axi bram: ioctl fail get arg");
         return -EACCES;
     }
 
-    if(data.size > AXI_BRAM_WIDTH - data.offset) {
-        DEBUG_PRINT("ioctl size more then memory width\n");
+    if(data.size > AXI_BRAM_WIDTH - data.offset)
+    {
+        DEBUG_PRINT("axi bram: ioctl fail, size more then memory width");
         return -EACCES;
     }
 
@@ -86,23 +58,26 @@ static long bram_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
     value = kmalloc(data.size * sizeof(u32), GFP_KERNEL);
 
-    switch (cmd) {
+    switch (cmd)
+    {
     case AXI_BRAM_WRITE:
-        DEBUG_PRINT("ioctl write value");
-        if (copy_from_user(value, (u32 *)data.data, data.size * sizeof(u32))) {
-            DEBUG_PRINT("ioctl can't write from user");
+        DEBUG_PRINT("axi bram: ioctl write value");
+        if (copy_from_user(value, (u32 *)data.data, data.size * sizeof(u32)))
+        {
+            DEBUG_PRINT("axi bram: ioctl fail copy from user");
             kfree(value);
             return -EACCES;
         }
         memcpy(axibram_pointer + data.offset, value, data.size * sizeof(u32));
-        DEBUG_PRINT("ioctl write ok!");
+        DEBUG_PRINT("axi bram: ioctl write");
         break;
     case AXI_BRAM_READ:
-        DEBUG_PRINT("ioctl read value");
+        DEBUG_PRINT("axi bram: ioctl read value");
         memcpy(value, axibram_pointer + data.offset, data.size * sizeof(u32));
 
-        if(copy_to_user(data.data, axibram_pointer + data.offset, data.size * sizeof(u32))) {
-            DEBUG_PRINT("ioctl can't copy to user");
+        if(copy_to_user(data.data, value, data.size * sizeof(u32)))
+        {
+            DEBUG_PRINT("axi bram: ioctl fail copy to user");
             kfree(value);
             return -EACCES;
         }
@@ -118,8 +93,6 @@ static long bram_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 }
 
 struct file_operations fops = {
- //    .read = bram_read,
- //    .write = bram_write,
     .open = bram_open,
     .release = bram_close,
     .unlocked_ioctl = bram_ioctl
@@ -128,35 +101,37 @@ struct file_operations fops = {
 
 static int __init mod_init(void)
 {
-    printk(KERN_ERR "Init %s module. \n", DEVICE_NAME);
+    DEBUG_PRINT("axi bram: init %s module", DEVICE_NAME);
     axibram_pointer = ioremap_nocache(AXI_BRAM_BASE, AXI_BRAM_WIDTH);
 
     majorNumber = register_chrdev(0, DEVICE_NAME, &fops);
-    if (majorNumber<0){
+    if (majorNumber < 0)
+    {
         printk(KERN_ALERT "Axi-bram : failed to register a major number\n");
         return majorNumber;
     }
-    printk(KERN_INFO "Axi-bram : Registered correctly with major number %d\n", majorNumber);
+    DEBUG_PRINT("axi bram: register with major number %d", majorNumber);
 
+
+    DEBUG_PRINT("axi bram: device class register");
     charClass = class_create(THIS_MODULE, CLASS_NAME);
     if (IS_ERR(charClass))
     {
         unregister_chrdev(majorNumber, DEVICE_NAME);
-        printk(KERN_ALERT "Axi-bram : failed to register device class\n");
+        DEBUG_PRINT("axi bram: fail to register device class");
         return PTR_ERR(charClass);
     }
-    printk(KERN_INFO "Axi-bram : device class registered correctly\n");
 
     charDevice = device_create(charClass, NULL, MKDEV(majorNumber, 0), NULL, DEVICE_NAME);
     if (IS_ERR(charDevice))
     {
         class_destroy(charClass);
         unregister_chrdev(majorNumber, DEVICE_NAME);
-        printk(KERN_ALERT "Axi-bram : failed to create the device\n");
+        DEBUG_PRINT("axi bram: fail to create the device");
         return PTR_ERR(charDevice);
     }
-    printk(KERN_INFO "Axi-bram : device class created correctly\n");
-    printk(KERN_NOTICE "+ Axi-bram  Driver loading\n" );
+    DEBUG_PRINT("axi bram: device class create");
+    DEBUG_PRINT("axi bram: driver load");
 
     return SUCCESS;
 }
@@ -166,7 +141,7 @@ static void __exit mod_exit(void)
 {
     iounmap(axibram_pointer);
     unregister_chrdev(majorNumber, DEVICE_NAME);
-    printk(KERN_ERR "Exit %s Module. \n", DEVICE_NAME);
+    DEBUG_PRINT("axi bram: exit %s module", DEVICE_NAME);
 }
 
 module_init(mod_init);
