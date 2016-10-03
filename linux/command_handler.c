@@ -204,8 +204,6 @@ uint32_t speed_to_delay(int speed)
 
   if (cur_speed > 100)
     cur_speed = 100;
-  if (cur_speed < 0)
-    cur_speed = 0;
 
   delay = (uint32_t)(MAX_DELAY - ((MAX_DELAY - MIN_DELAY) * cur_speed / 100.0));
 
@@ -218,15 +216,12 @@ uint32_t speed_to_torq(int speed)
   uint16_t cur_speed = (uint16_t)abs(speed);
   if (cur_speed > 100)
     cur_speed = 100;
-  if (cur_speed < 0)
-    cur_speed = 0;
 
   torq = (uint32_t)(MIN_TORQ + ((MAX_TORQ - MIN_TORQ) * cur_speed / 100.0));
   if (cur_speed == 0)
     torq = 0;
 
   return torq;
-
 }
 
 int torq_to_speed(uint32_t torq, uint16_t direction)
@@ -238,7 +233,7 @@ int torq_to_speed(uint32_t torq, uint16_t direction)
   if (torq < MIN_TORQ)
     torq = MIN_TORQ;
 
-  speed = (torq - MIN_TORQ) * 100 / (MAX_TORQ - MIN_TORQ);
+  speed = (int)((torq - MIN_TORQ) * 100.0 / (MAX_TORQ - MIN_TORQ) + 0.5);
   if(speed > 100)
     speed = 100;
   if (direction == ENG_DIRECTION_REVERSE)
