@@ -6,8 +6,6 @@
 #include <sys/ioctl.h>
 #include <memory.h>
 
-#define DEBUG       3
-
 #include "log.h"
 #include "command_bram.h"
 

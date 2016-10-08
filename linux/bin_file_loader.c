@@ -5,8 +5,6 @@
 #include <inttypes.h>
 #include <sys/stat.h>
 
-#define DEBUG       3
-
 #include "log.h"
 #include "command_bram.h"
 

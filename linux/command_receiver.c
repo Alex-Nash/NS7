@@ -10,8 +10,6 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 
-#define DEBUG       3
-
 #include "log.h"
 #include "command_handler.h"
 #include "command_receiver.h"
@@ -58,7 +56,7 @@ int init_command_socket(int port)
         return -1;
     }
 
-    if(listen(sockfd, SOMAXCONN) == -1) {
+    if(listen(sockfd, 1024) == -1) {
         ERROR_MSG("listen: fail (%s)", strerror(errno));
         return -1;
     }
@@ -91,23 +89,34 @@ int init_command_socket(int port)
         USER_MSG("server: got connection (%s)", inet_ntoa(their_addr.sin_addr));
 
         int numbytes;
-        char cmd[CMDSIZE];
+        int i;
+        char buf[24];
 
         while(running)
         {
-            if((numbytes = recv(clientfd, cmd, CMDSIZE, 0)) == -1)
+            i = 0;
+
+            while(1)
             {
-                ERROR_MSG("recv: fail (%s)", strerror(errno));
-                break;
+                if((numbytes = recv(clientfd, buf + i, 1, 0)) == -1)
+                {
+                    ERROR_MSG("recv: fail (%s)", strerror(errno));
+                    running = 0;
+                    break;
+                }
+
+                if(numbytes == 0)
+                {
+                    USER_MSG("connection: lost");
+                    running = 0;
+                    break;
+                }
+
+                if(*(buf+i) == LF) break;
+                if(++i == 24) break;
             }
 
-            if(numbytes == 0)
-            {
-                USER_MSG("connection: lost");
-                break;
-            }
-
-            if(handle_command(cmd) == -1)
+            if(handle_command(buf) == -1)
             {
                 ERROR_MSG("handle_command: fail (unknown command)");
                 break;

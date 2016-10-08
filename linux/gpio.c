@@ -3,8 +3,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#define DEBUG       3
-
 #include "log.h"
 #include "gpio.h"
 

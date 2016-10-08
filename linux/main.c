@@ -8,8 +8,6 @@
 #include <getopt.h>
 #include <sys/stat.h>
 
-#define DEBUG       3
-
 #include "log.h"
 #include "command_receiver.h"
 #include "command_handler.h"
@@ -68,6 +66,10 @@ static int daemonize()
     pid_t pid = 0;
     int fd;
 
+    USER_MSG("starting daemon server");
+    USER_MSG("see log for status");
+    daemonized = is_daemon;
+
     // Fork off the parent process
     pid = fork();
 
@@ -94,10 +96,6 @@ static int daemonize()
 
     // Ignore signal sent from child to parent process
     signal(SIGCHLD, SIG_IGN);
-
-    USER_MSG("starting daemon server (PID - %d)", getpid());
-    USER_MSG("see log for status");
-    daemonized = is_daemon;
 
     // Fork off for the second time
     pid = fork();

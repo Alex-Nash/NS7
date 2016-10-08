@@ -3,8 +3,6 @@
 #include <string.h>
 #include <inttypes.h>
 
-#define DEBUG       3
-
 #include "log.h"
 #include "command_bram.h"
 #include "command_handler.h"
