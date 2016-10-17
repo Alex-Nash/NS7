@@ -13,7 +13,7 @@ set(SOURCE_EXECUTABLE main.c)
 set(SOURCE_LIBRARY command_receiver.c command_bram.c command_handler.c log.c gpio.c bin_file_loader.c)
 
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG -D DEBUG=3"}")
-add_definitions(-DDEBUG=1)
+add_definitions(-DDEBUG=2)
 
 #add_library(bram STATIC command_bram.c)
 #add_library(handler STATIC command_handler.c)

@@ -70,6 +70,8 @@ int init_command_socket(int port)
         return -1;
     }
 
+    int reading = 0;
+
     // main accept() only one connection
     while(running)
     {
@@ -87,12 +89,13 @@ int init_command_socket(int port)
         }
 
         USER_MSG("server: got connection (%s)", inet_ntoa(their_addr.sin_addr));
+        reading = 1;
 
         int numbytes;
         int i;
         char buf[24];
 
-        while(running)
+        while(reading)
         {
             i = 0;
 
@@ -101,14 +104,14 @@ int init_command_socket(int port)
                 if((numbytes = recv(clientfd, buf + i, 1, 0)) == -1)
                 {
                     ERROR_MSG("recv: fail (%s)", strerror(errno));
-                    running = 0;
+                    reading = 0;
                     break;
                 }
 
                 if(numbytes == 0)
                 {
-                    USER_MSG("connection: lost");
-                    running = 0;
+                    ERROR_MSG("connection: lost");
+                    reading = 0;
                     break;
                 }
 
@@ -125,9 +128,9 @@ int init_command_socket(int port)
         }
 
         close(clientfd);
-        close(sockfd);
-        return -1;
     }
+
+    close(sockfd);
 
     return 0;
 }
