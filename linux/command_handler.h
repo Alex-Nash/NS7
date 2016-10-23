@@ -55,6 +55,8 @@ uint32_t speed_to_delay(int speed);
 
 uint32_t speed_to_torq(int speed);
 
+int erase_move_comand_memory();
+
 int torq_to_speed(uint32_t torq, uint16_t direction);
 
 int speed_smoothing (int cur_speed_value, int prev_speed_value);
