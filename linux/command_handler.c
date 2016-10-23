@@ -192,7 +192,34 @@ int execute_power_cmd(char *command_str)
     return -1;
   }
 
+    status = erase_move_comand_memory();
+    if ( status == -1)
+    {
+        ERROR_MSG("power command: fail to erase memory");
+        return -1;
+    }
+
   return 0;
+}
+
+int erase_move_comand_memory()
+{
+
+    int status;
+    // set 0 to right command in memory
+    status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_RIGHT , (uint64_t)0x00, 2);
+    if ( status == -1)
+    {
+        return -1;
+    }
+    // ser 0 to left command in memory
+    status = bram_memory_write((uint32_t)MEM_OFFSET_COMMAND_LEFT , (uint64_t)0x00, 2);
+    if ( status == -1)
+    {
+        return -1;
+    }
+
+    return 0;
 }
 
 uint32_t speed_to_delay(int speed)
